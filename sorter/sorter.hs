@@ -4,15 +4,15 @@ import Control.Monad
 import Data.List
 import Robotics.NXT
 
+-- | Synonym for the default parameters passed to the motor function.
 rotateMotor :: OutputPort -> OutputPower -> NXT ()
 rotateMotor port power = setOutputStateConfirm port power [MotorOn, Brake,Regulated] RegulationModeIdle 0 MotorRunStateRunning 0
 
+-- | A getter for the sensor reading of interest.
 getScaledValue :: InputValue -> ScaledValue
 getScaledValue (InputValue _ _ _ _ _ _ _ x _) = x
 
-average :: (Real a, Integral b) => [a] -> b
-average xs = round (realToFrac (sum xs) / genericLength xs)
-
+-- | Takes a reading by the sensor and chooses whether to move motor A either clockwise, counter-clockwise, or none at all.
 sorter :: ScaledValue -> NXT ()
 sorter ambientThreshold = do
     setInputModeConfirm Two Switch BooleanMode
@@ -26,15 +26,16 @@ sorter ambientThreshold = do
         else stopEverything
     stopEverything
 
-calibrate :: NXT ScaledValue
-calibrate = do
+-- | Takes n readings of the environment with the light sensor and returns the largest reading of them all. Used to set a good threshold for the sensor later on to determine whether there's a brick in front of it in the first place.
+calibrate :: Int -> NXT ScaledValue
+calibrate n = do
     setInputModeConfirm Three LightActive PctFullScaleMode
-    lst <- replicateM 100 (getInputValues Three)
+    lst <- replicateM n (getInputValues Three)
     return (foldr1 max (map getScaledValue lst))
-    
+
 main :: IO ()
 main = do
     withNXT defaultDevice $ do 
-        threshold <- calibrate
+        threshold <- calibrate 500
         forever (sorter threshold)
     return ()
