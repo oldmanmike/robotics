@@ -2,6 +2,7 @@ module Main where
 
 import Control.Monad
 import Data.List
+import Debug.Trace
 import Robotics.NXT
 
 -- | Synonym for the default parameters passed to the motor function.
@@ -19,10 +20,11 @@ sorter ambientThreshold = do
     setInputModeConfirm Three LightActive PctFullScaleMode
     v <- getInputValues Three
     let colorValue = getScaledValue v
+    traceM $ "Reading is: " ++ show colorValue
     if colorValue > ambientThreshold
         then if colorValue >= 50 -- 47
-                then rotateMotor A 50 >> stopEverything
-                else rotateMotor A (-50) >> stopEverything
+                then rotateMotor A 100 >> stopEverything
+                else rotateMotor A (-100) >> stopEverything
         else stopEverything
     stopEverything
 
@@ -31,7 +33,9 @@ calibrate :: Int -> NXT ScaledValue
 calibrate n = do
     setInputModeConfirm Three LightActive PctFullScaleMode
     lst <- replicateM n (getInputValues Three)
-    return (foldr1 max (map getScaledValue lst))
+    let threshold = (foldr1 max (map getScaledValue lst))
+    traceM $ "Threshold is: " ++ show threshold
+    return threshold
 
 main :: IO ()
 main = do
