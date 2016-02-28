@@ -1,4 +1,6 @@
 \documentclass{article}
+\usepackage{listings}
+\usepackage{color}
 \title{Assignment 3: A Machine for Sorting Bricks}
 \author{Michael Carpenter \\ Benjamin Liebersohn}
 \date{\today}
@@ -12,7 +14,52 @@
 \section{Hardware}
 
 \section{Software}
+For the software component, we used a well documented NXT library written in the Haskell programming language, as it was the quickest way to get a program written that worked.
+The implementation consists of two function, one to calibrate the robot and the other to actually sort the brick.
+When the robot first fires up, it enters into the calibration function which takes a series of readings with the light sensor and then finds the largest reading.
+This reading is used as a threshold reading for the sorting function.
+The sorting function starts off by taking a reading with the light sensor.
+It also takes the threshold value calculated previously during the calibration stage and uses it as a sensitivity baseline on which to decide whether the incoming sensor reading is of a lego brick or not.
+If the reading drops below the calculated threshold, then the reading is interpreted as the fact that there is no brick currently in front of the sensor to be sorted and that the sorter function should simply return.
+If the reading is above the threshold, then the reading is compared against a pivot.
+Depending on the boolean value of this comparison, the robot will either rotate its single motor clockwise or counter-clockwise.
+This caused the robots arm to swipe the lego left or right.
+This function is run in an infinite loop until the program is manually stopped by the user.
 
 \section{Discussion}
 
+\newpage
+\appendix
+\section{Code}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\lstset{
+  backgroundcolor=\color{white},
+  basicstyle=\footnotesize,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  commentstyle=\color{mygreen},
+  deletekeywords={...},
+  extendedchars=true,
+  frame=single,
+  keepspaces=true,
+  keywordstyle=\color{blue},
+  language=Haskell,
+  otherkeywords={*,...},
+  numbers=left,
+  numbersep=5pt,
+  numberstyle=\tiny\color{mygray},
+  rulecolor=\color{black},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  stepnumber=2,
+  stringstyle=\color{mymauve},
+  tabsize=2,
+  title=\lstname
+}
+
+\lstinputlisting[language=Haskell]{../sorter/sorter.hs}
 \end{document}
