@@ -12,7 +12,18 @@
 \section{Goals}
 
 \section{Hardware}
-The Lego sorter is designed to sort the Lego bricks into two categories: light, and dark. The way our sorter determines this quality is through a reflectivity sensor which acts as a proxy to measuring shade. The idea behind this is that a red LED shines light onto a brick, which then reflects back into a light sensor. If a brick has a lighter shade, it absorbs less of the light, which can then reflect and be measured. A higher reading, thus means our brick is likely a lighter shade because it is more reflective of red light. In order to decide what constitutes light, or dark, our sorter begins by taking samples of light readings and aggregating them to find the ambient light sensor reading. Once it has done this, it can begin to determine if a brick is light or dark. Once that determination has been made, the motor powers a lever which pushes the brick out of the sorter in one of two directions: either the lever is turned counter clockwise to push a light brick to the left (with the light sensor facing the user) or counter clockwise to push the dark brick to the right. From there, a bumper and deflector guide the brick out of the sorter, into the cups below. Occasionally, bricks may jam in between a rail and sensor, which is corrected by gears we allow to slip, and thus repeatedly tap the brick with the lever. Since the bricks only jam in front of a sensor, the sensor can detect when there is still a brick on the platform, allowing the motor to continue to tap on the jammed brick, which is normally enough to coax the brick out of the corner.
+The Lego sorter is designed to sort the Lego bricks into two categories: light, and dark.
+The way our sorter determines this quality is through a reflectivity sensor which acts as a proxy to measuring shade.
+The idea behind this is that a red LED shines light onto a brick, which then reflects back into a light sensor.
+If a brick has a lighter shade, it absorbs less of the light, which can then reflect and be measured.
+A higher reading, thus means our brick is likely a lighter shade because it is more reflective of red light.
+In order to decide what constitutes light, or dark, our sorter begins by taking samples of light readings and aggregating them to find the ambient light sensor reading.
+Once it has done this, it can begin to determine if a brick is light or dark. 
+Once that determination has been made, the motor powers a lever which pushes the brick out of the sorter in one of two directions: either the lever is turned counter clockwise to push a light brick to the left (with the light sensor facing the user) or counter clockwise to push the dark brick to the right.
+From there, a bumper and deflector guide the brick out of the sorter, into the cups below.
+Occasionally, bricks may jam in between a rail and sensor, which is corrected by gears we allow to slip, and thus repeatedly tap the brick with the lever. 
+Since the bricks only jam in front of a sensor, the sensor can detect when there is still a brick on the platform, allowing the motor to continue to tap on the jammed brick, which is normally enough to coax the brick out of the corner.
+
 \section{Software}
 For the software component, we used a well documented NXT library written in the Haskell programming language, as it was the quickest way to get a program written that worked.
 The implementation consists of two function, one to calibrate the robot and the other to actually sort the brick.
@@ -61,5 +72,5 @@ This function is run in an infinite loop until the program is manually stopped b
   title=\lstname
 }
 
-\lstinputlisting[language=Haskell]{../sorter/sorter.hs}
+\lstinputlisting[language=Haskell]{sorter.hs}
 \end{document}
