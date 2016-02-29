@@ -8,6 +8,12 @@
 \maketitle
 
 \section{Introduction}
+For this lab, we were tasked to build a Lego NXT robot capable of sorting colored bricks into one of two categories: light or dark.
+Furthermore, it had to be able to do this for a random sequence of bricks of varying color.
+The main value of this was to build an autonomous robot through the integration of hardware and software, that could perform a specific task accurately and reliably. 
+This had particular value given it reduced the amount of new concepts that had to be wrangled in order to obtain a robot that could actually perform the given task at least passably well.
+Only one sensor and one motor was needed to perform the actual sorting and the code involved to control the robot was sort and simple.
+That left room for what was probably the most intensive part of the lab: testing the complete robot itself. It took many iterations in order to arrive at our final design.
 
 \section{Hardware}
 The Lego sorter is designed to sort the Lego bricks into two categories: light, and dark.
@@ -36,16 +42,6 @@ This caused the robots arm to swipe the Lego left or right.
 This function is run in an infinite loop until the program is manually stopped by the user.
 
 \section{Discussion}
-In a future design, we would like to use slightly different methods to measure reflectivity.
-Because the LED we used emits a red spectrum light, some colors of Lego bricks reflect light back in unexpected ways.
-Instead, using the white incandescent light supplied with the kit would give a more balanced spectrum to reflect back to the light sensor, which would give us more accurate readings.
-Another change to make to the methods involving the light sensor would be to continue to sample ambient readings throughout the sorting process.
-Instead of relying on only an initial sampling, additional samples of ambient light could be taken when bricks are not in front of the sensor.
-The sorter could know if a brick is being examined by using the ultrasonic sensors to determine if something is directly in front of the light sensor.
-This way, additional samples of ambient light are taken, allowing the ambient light reading to reflect the lighting in the room in a "hot-swapping" manner.
-Another aspect of our design which we could improve further would be our accuracy at landing bricks in the cup.
-While most bricks do land in the correct cup, sometimes a brick might bounce back out, or get pushed back towards the motor.
-The best solution to these problems will likely involve looking for ways to lower the sorting platform and arm, in order to lessen the likelihood of failure due to the bricks bouncing or falling inaccurately.  
 
 \newpage
 \appendix
