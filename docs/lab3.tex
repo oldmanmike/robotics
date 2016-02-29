@@ -49,13 +49,14 @@ This function is run in an infinite loop until the program is manually stopped b
       \hline 
       Color   & T1 & T2 & T3 & T4 & T5 & T6 & T7 & T8 & T9 & T10 \\
       \hline
-      Black   &    &    &    &    &    &    &    &    &    &     \\
-      Blue    &    &    &    &    &    &    &    &    &    &     \\
-      Green   &    &    &    &    &    &    &    &    &    &     \\
-      Red     &    &    &    &    &    &    &    &    &    &     \\
-      Yellow  &    &    &    &    &    &    &    &    &    &     \\
-      Pink    &    &    &    &    &    &    &    &    &    &     \\
-      White   &    &    &    &    &    &    &    &    &    &     \\
+      Black   &   D &  D  &  D  &  D  &  D  &  D  &  D  &  D  &  D  &  D   \\
+      Blue    & D   &  D  &  D  &  D  &  D  &  D  &  D  &  D  &  D  &  D   \\
+      Green   &  D  &  D  &  D  &  D  &  D  &  D  & D   &  D  & D   &  D   \\
+ Light Green  &  D  & D   &  D  &  D  &  D  &  D  &  D  &  D  & D   &  D   \\
+      Red     &  L  & L   &   L &  L  &  L  &  L  &  L  &  L  & L   &  L   \\
+      Yellow  & L   &  L  & L   & L   &  L  & L   & L   &  L  & L   &  L   \\
+      Pink    & L   &  L  & L   & L   & L   &  L  &  L  & L   & L   &  L   \\
+      White   &  L  &  L  & L   & L   &  L  & L   &  L  &  L  &  L  &  L   \\
       \hline
     \end{tabular}
   \end{center}
@@ -65,6 +66,7 @@ This function is run in an infinite loop until the program is manually stopped b
 \section{Discussion}
 In a future design, we would like to use slightly different methods to get more useful reflectivity readings. 
 Because the LED we used emits a red spectrum light, some colors of Lego bricks reflect light back in ways which are not how the bricks are seen by us. 
+This was an issue when we wanted to sort the light green Lego brick, which reflected red spectrum light poorly, and thus gets incorrectly sorted as dark.
 Instead, using the white incandescent light supplied with the kit may provided more balanced spectrum to reflect back to the light sensor, which would give us readings more similar to how the bricks look under natural light. 
 Another change to make to the methods involving the light sensor would be to continue to sample ambient readings throughout the sorting process. 
 Instead of relying on only an initial sampling, additional samples of ambient light could be taken when bricks are not in front of the sensor. 
