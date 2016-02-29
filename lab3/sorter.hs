@@ -1,5 +1,3 @@
-module Sorter where
-
 import Control.Monad
 import Data.List
 import Debug.Trace
