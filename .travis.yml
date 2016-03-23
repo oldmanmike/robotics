@@ -10,7 +10,7 @@ cache:
     - $HOME/.stack/
 
 before_install:
-  - cd bot
+  - cd hs-robotics
   - mkdir -p ~/.local/bin
   - export PATH=~/.local/bin:$PATH
   - travis_retry wget https://github.com/commercialhaskell/stack/releases/download/v0.1.6.0/stack-0.1.6.0-linux-x86_64.tar.gz

@@ -1,0 +1,76 @@
+name:                   hs-robotics
+version:                0.1.0.0
+synopsis:               Source code for a certain NXT robot
+description:            Please see README.md
+homepage:               https://github.com/oldmanmike/hs-robotics
+bug-reports:            https://github.com/oldmanmike/hs-robotics/issues
+license:                BSD3
+license-file:           LICENSE
+author:                 Michael Carpenter
+maintainer:             Michael Carpenter <oldmanmike.dev@gmail.com>
+copyright:              Copyright (C) 2016 Michael Carpenter
+category:               Robotics
+build-type:             Simple
+extra-source-files:     LICENSE, README.md
+cabal-version:          >=1.10
+
+
+library
+  hs-source-dirs:       src
+  ghc-options:          -Wall -O2
+  exposed-modules:      Bot
+                        Bot.Logger
+                        Bot.Logic
+  build-depends:        base >= 4.7 && < 5,
+                        fast-logger,
+                        NXT,
+                        old-locale,
+                        stm,
+                        thyme,
+                        transformers
+  default-language:     Haskell2010
+
+
+executable sorter
+  hs-source-dirs:       bin
+  main-is:              sorter.hs
+  ghc-options:          -threaded -rtsopts -with-rtsopts=-N
+  build-depends:        base,
+                        hs-robotics,
+                        NXT
+  default-language:     Haskell2010
+
+
+executable compass
+  hs-source-dirs:       bin
+  main-is:              compass.hs
+  ghc-options:          -threaded -rtsopts -with-rtsopts=-N
+  build-depends:        base,
+                        hs-robotics,
+                        NXT
+  default-language:     Haskell2010
+
+
+executable line-follower
+  hs-source-dirs:       bin
+  main-is:              line-follower.hs
+  ghc-options:          -threaded -rtsopts -with-rtsopts=-N
+  build-depends:        base,
+                        hs-robotics
+  default-language:     Haskell2010
+
+
+test-suite hs-robotics-test
+  type:                 exitcode-stdio-1.0
+  hs-source-dirs:       test
+  main-is:              Spec.hs
+  build-depends:        base,
+                        hs-robotics,
+                        NXT
+  ghc-options:          -threaded -rtsopts -with-rtsopts=-N
+  default-language:     Haskell2010
+
+
+source-repository head
+  type:     git
+  location: https://github.com/oldmanmike/hs-robotics
