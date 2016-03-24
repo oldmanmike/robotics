@@ -2,6 +2,7 @@ module Main where
 
 import Control.Concurrent
 import Control.Monad
+import Control.Monad.IO.Class
 import Robotics.NXT
 import Bot.Logger
 import Bot.Logic
@@ -9,9 +10,8 @@ import Bot.Logic
 
 runBot :: Logger -> IO ()
 runBot logger = do
-    --startValue <-  withNXT defaultDevice $ calibrate Three 100
     --writeTo logger Info $ "Start Value Calibrated to: " ++ show startValue
-    --threadDelay 1000000
+    -- threadDelay 1000000
     lineValue <- withNXT defaultDevice $ calibrateAVG Three 100
     writeTo logger Info $ "Line Value Calibrated to: " ++ show lineValue
     threadDelay 1000000

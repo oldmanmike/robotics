@@ -24,6 +24,6 @@ sorter ambientThreshold = do
 main :: IO ()
 main = do
     withNXT defaultDevice $ do 
-        threshold <- calibrate Three 500
+        threshold <- calibrateMAX Three 500
         forever (sorter threshold)
     return ()
