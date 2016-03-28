@@ -15,10 +15,6 @@ import Robotics.NXT
 import Bot.Logger
 
 
--- | Takes n readings of the environment with the light sensor and returns 
--- the largest reading of them all. Used to set a good threshold for the 
--- sensor later on to determine whether there's a brick in front of it in 
--- the first place.
 calibrateMAX :: InputPort -> Int -> NXT ScaledValue
 calibrateMAX port n = do
     setInputModeConfirm Three LightActive PctFullScaleMode
@@ -42,7 +38,6 @@ rotateMotor port power =
         motorRunState = MotorRunStateRunning
 
 
--- | A getter for the sensor reading of interest.
 getScaledValue :: InputValue -> ScaledValue
 getScaledValue (InputValue _ _ _ _ _ _ _ x _) = x
 
@@ -54,31 +49,33 @@ readSensor port sType sMode = do
   resetInputScaledValue port
   return reading
 
-
-maybeTurn :: Logger -> Int -> Int -> NXT ()
-maybeTurn logger threshold reading
-  | reading == threshold = do
-      liftIO $ writeTo logger Debug $ show reading ++ " = " ++ show threshold
-      liftIO $ writeTo logger Debug $ "--> Keep Straight"
+maybeTurn :: Logger -> Int -> Int -> Int -> Int -> NXT ()
+maybeTurn logger threshold1 threshold2 readingLeft readingRight
+  -- | ((abs (45 - readingLeft)) < 3) || ((abs (45 - readingRight)) < 2) = do
+  --    liftIO $ writeTo logger Debug $ "Stopping"
+  --     stopEverything
+  | abs (readingLeft - readingRight) < 2 = do
       rotateMotor A 25
       rotateMotor B 25
-  | reading > threshold = do
-      liftIO $ writeTo logger Debug $ show reading ++ " > " ++ show threshold
-      liftIO $ writeTo logger Debug $ "--> Turning Left"
-      rotateMotor A 25
-      rotateMotor B 0
-  | reading < threshold = do
-      liftIO $ writeTo logger Debug $ show reading ++ " < " ++ show threshold
-      liftIO $ writeTo logger Debug $ "--> Turning Right"
-      rotateMotor A 0
-      rotateMotor B 25
+  | abs (readingLeft - readingRight) > 2 = do
+    if readingLeft > readingRight
+      then do
+        -- Right side is detecting the line
+        liftIO $ writeTo logger Debug $ "--> Turn Right"
+        rotateMotor A 30
+        rotateMotor B 26
+      else do
+        -- Left side is detecting the line
+        liftIO $ writeTo logger Debug $ "--> Turn Left"
+        rotateMotor A 26
+        rotateMotor B 30
   | otherwise = return ()
 
 
-followLineWith :: Logger -> ScaledValue -> NXT ()
-followLineWith logger lineValue = do
-    reading <- calibrateAVG Three 5
-    liftIO $ writeTo logger Debug $ "Reading is: " ++ show reading
-    maybeTurn logger lineValue reading
-    rotateMotor A 25
-    rotateMotor B 25
+followLineWith :: Logger -> ScaledValue -> ScaledValue -> NXT ()
+followLineWith logger threshold1 threshold2 = do
+    reading1 <- calibrateAVG Three 10
+    reading2 <- calibrateAVG Four 10
+    liftIO $ writeTo logger Debug $ "Right Reading is: " ++ show reading1
+    liftIO $ writeTo logger Debug $ "Left Reading is: " ++ show reading2
+    maybeTurn logger threshold1 threshold2 reading1 reading2 

@@ -10,13 +10,13 @@ import Bot.Logic
 
 runBot :: Logger -> IO ()
 runBot logger = do
-    --writeTo logger Info $ "Start Value Calibrated to: " ++ show startValue
-    -- threadDelay 1000000
-    lineValue <- withNXT defaultDevice $ calibrateAVG Three 100
-    writeTo logger Info $ "Line Value Calibrated to: " ++ show lineValue
-    threadDelay 1000000
     withNXT defaultDevice $ forever $ do
-      followLineWith logger lineValue
+      -- threshold1 <- calibrateAVG Three 10
+      -- threshold2 <- calibrateAVG Four 10
+      --rotateMotor A 50
+      --rotateMotor B 50
+      --stopEverything
+      followLineWith logger threshold1 threshold2
 
 
 main :: IO ()
