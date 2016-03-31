@@ -10,14 +10,15 @@ import Bot.Logic
 
 runBot :: Logger -> IO ()
 runBot logger = do
-    withNXT defaultDevice $ forever $ do
-      -- threshold1 <- calibrateAVG Three 10
-      -- threshold2 <- calibrateAVG Four 10
-      --rotateMotor A 50
-      --rotateMotor B 50
-      --stopEverything
-      followLineWith logger threshold1 threshold2
+    withNXT defaultDevice $ 
+      initialLeap logger >> (forever $ followLineWith logger)
 
+initialLeap :: Logger -> NXT ()
+initialLeap logger = do
+    setOutputStateConfirm A 50 [MotorOn,Brake,Regulated] RegulationModeIdle 0 MotorRunStateRunning 0
+    setOutputStateConfirm B 50 [MotorOn,Brake,Regulated] RegulationModeIdle 0 MotorRunStateRunning 0
+    liftIO $ threadDelay 1000000
+    liftIO $ writeTo logger Info "Beginning line follow..."
 
 main :: IO ()
 main = do

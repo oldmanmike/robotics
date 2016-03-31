@@ -13,6 +13,7 @@ import Control.Monad
 import Control.Monad.IO.Class
 import Robotics.NXT
 import Bot.Logger
+import System.Exit
 
 
 calibrateMAX :: InputPort -> Int -> NXT ScaledValue
@@ -49,33 +50,37 @@ readSensor port sType sMode = do
   resetInputScaledValue port
   return reading
 
-maybeTurn :: Logger -> Int -> Int -> Int -> Int -> NXT ()
-maybeTurn logger threshold1 threshold2 readingLeft readingRight
-  -- | ((abs (45 - readingLeft)) < 3) || ((abs (45 - readingRight)) < 2) = do
-  --    liftIO $ writeTo logger Debug $ "Stopping"
-  --     stopEverything
-  | abs (readingLeft - readingRight) < 2 = do
+maybeTurn :: Logger -> Int -> Int -> NXT ()
+maybeTurn logger readingLeft readingRight
+  | (readingLeft <= 45) || (readingRight <= 45) = do
+      liftIO $ writeTo logger Debug $ "Stopping"
+      rotateMotor A (-10)
+      rotateMotor B (-10)
+      stopEverything
+      shutdown
+      liftIO exitSuccess
+  | abs (readingLeft - readingRight) <= 2 = do
       rotateMotor A 25
       rotateMotor B 25
   | abs (readingLeft - readingRight) > 2 = do
     if readingLeft > readingRight
       then do
         -- Right side is detecting the line
-        liftIO $ writeTo logger Debug $ "--> Turn Right"
-        rotateMotor A 30
+        liftIO $ writeTo logger Debug $ "--> Turn Left"
+        rotateMotor A 28
         rotateMotor B 26
       else do
         -- Left side is detecting the line
-        liftIO $ writeTo logger Debug $ "--> Turn Left"
+        liftIO $ writeTo logger Debug $ "--> Turn Right"
         rotateMotor A 26
-        rotateMotor B 30
+        rotateMotor B 28
   | otherwise = return ()
 
 
-followLineWith :: Logger -> ScaledValue -> ScaledValue -> NXT ()
-followLineWith logger threshold1 threshold2 = do
-    reading1 <- calibrateAVG Three 10
-    reading2 <- calibrateAVG Four 10
+followLineWith :: Logger -> NXT ()
+followLineWith logger = do
+    reading1 <- calibrateAVG Three 3
+    reading2 <- calibrateAVG Four 3
     liftIO $ writeTo logger Debug $ "Right Reading is: " ++ show reading1
     liftIO $ writeTo logger Debug $ "Left Reading is: " ++ show reading2
-    maybeTurn logger threshold1 threshold2 reading1 reading2 
+    maybeTurn logger reading1 reading2 
