@@ -5,7 +5,7 @@ from jaraco.nxt.routine import get_port
 from jaraco.nxt.messages import RegulationMode, RunState
 from jaraco.nxt import _enum as enum
 
-conn = Connection("COM17")
+conn = Connection("/dev/tty.NXT-Dev8")
 light_port = enum.InputPort(4)
 motor_port_a = get_port('a', messages.OutputPort)
 motor_port_b = get_port('b', messages.OutputPort)
@@ -13,9 +13,6 @@ conn.send(messages.SetInputMode(light_port, messages.SensorType.light_active, me
 
 Blue_Reading = 540
 Gray_Reading = 580
-
-def readSensor(conn,port,sensor_type,mode):
-    conn.send(messages.SetInputMode(port, messages.SensorType.(sensor_type), messages.SensorMode.(mode)))
 
 
 def calibrateMAX(conn,port,n):
