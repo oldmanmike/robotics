@@ -5,7 +5,7 @@ from jaraco.nxt.routine import get_port
 from jaraco.nxt.messages import RegulationMode, RunState
 from jaraco.nxt import _enum as enum
 
-conn = Connection("/dev/tty.NXT-Dev8")
+conn = Connection("/dev/tty.NXT-DevB")
 light_port = enum.InputPort(4)
 motor_port_a = get_port('a', messages.OutputPort)
 motor_port_b = get_port('b', messages.OutputPort)
