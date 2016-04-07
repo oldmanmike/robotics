@@ -8,6 +8,7 @@ from jaraco.nxt import _enum as enum
 conn = Connection("/dev/tty.NXT-DevB")
 right_port = enum.InputPort(1)
 left_port = enum.InputPort(2)
+light_port = left_port
 motor_port_a = get_port('a', messages.OutputPort)
 motor_port_b = get_port('b', messages.OutputPort)
 conn.send(messages.SetInputMode(light_port, messages.SensorType.light_active, messages.SensorMode.raw))
