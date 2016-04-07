@@ -6,13 +6,23 @@ from jaraco.nxt.messages import RegulationMode, RunState
 from jaraco.nxt import _enum as enum
 
 conn = Connection("/dev/tty.NXT-DevB")
-light_port = enum.InputPort(4)
+right_port = enum.InputPort(1)
+left_port = enum.InputPort(2)
 motor_port_a = get_port('a', messages.OutputPort)
 motor_port_b = get_port('b', messages.OutputPort)
 conn.send(messages.SetInputMode(light_port, messages.SensorType.light_active, messages.SensorMode.raw))
 
+
 Blue_Reading = 540
 Gray_Reading = 580
+
+
+def moveMotor(conn,port,power,time):
+    cmd = messages.SetOutputState(port, motor_on = True, set_power = power, run_state = messages.RunState.running)
+    conn.send(cmd)
+    time.sleep(time)
+    cmd = messages.SetOutputState(port, motor_on = False)
+    conn.send(cmd)
 
 
 def calibrateMAX(conn,port,n):
@@ -22,6 +32,7 @@ def calibrateMAX(conn,port,n):
         readingList + x
     return (max(readingList))
 
+
 def calibrateAVG(conn,port,n):
     for i in xrange(n):
         conn.send(messages.GetInputValues(port))
@@ -29,10 +40,13 @@ def calibrateAVG(conn,port,n):
         readingList + x
     return (sum(readingList)/len(readingList))
 
+
 try:
-    conn.send(messages.GetInputValues(light_port))
+    conn.send(messages.GetInputValues(right_port))
     Current_Reading = conn.receive().normalized_value
     print Current_Reading
+    moveMotor(conn,motor_port_a,75,.35)
+    moveMotor(conn,motor_port_b,75,.35)
     while Current_Reading >= Blue_Reading:
         conn.send(messages.GetInputValues(light_port))
         Current_Reading = conn.receive().normalized_value
