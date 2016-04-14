@@ -3,6 +3,7 @@
 
 int rightReading;
 int leftReading;
+int compassReading;
 long tick;
 
 task main() { 
@@ -14,9 +15,11 @@ task main() {
   string rightStr;
   string leftStr;
   string tickStr;
+  string compassStr;
   string rightMsg;
   string leftMsg;
   string tickMsg;
+  string compassMsg;
 
   SetSensorType(IN_1, IN_TYPE_LIGHT_ACTIVE);
   SetSensorMode(IN_1, IN_MODE_RAW);
@@ -24,25 +27,33 @@ task main() {
   SetSensorType(IN_2, IN_TYPE_LIGHT_ACTIVE);
   SetSensorMode(IN_2, IN_MODE_RAW);
 
+  //SetSensorType(IN_3, IN_TYPE_CUSTOM);
+  //SetSensorMode(IN_3, IN_MODE_RAW);
+  SetSensorLowspeed(S3); 
+
   Wait(600); 
 
   while (keepGoing == true) {
-    tick = CurrentTick();
 
     rightReading = SensorRaw(IN_1);
     leftReading = SensorRaw(IN_2);
+    tick = CurrentTick();
+    compassReading = SensorHTCompass(S3);
 
     rightStr = NumToStr(rightReading);
     leftStr = NumToStr(leftReading);
     tickStr = NumToStr(tick);
+    compassStr = NumToStr(compassReading);
 
     rightMsg = "R Sensor: " + rightStr;
     leftMsg = "L Sensor: " + leftStr;
     tickMsg = "Time: " + tickStr;
+    compassMsg = "Compass: " + compassStr;
 
     TextOut(0, LCD_LINE1, rightMsg);
     TextOut(0, LCD_LINE2, leftMsg);
     TextOut(0, LCD_LINE3, tickMsg);
+    TextOut(0, LCD_LINE4, compassMsg);
 
     shouldStop = ((leftReading < 500) || (rightReading < 500));
     shouldTurn = (abs(leftReading - rightReading) > 15);
