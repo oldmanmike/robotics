@@ -4,22 +4,31 @@
 int rightReading;
 int leftReading;
 int compassReading;
-long tick;
+long rightRotation;
+long leftRotation;
+long tick = 0;
+
 
 task main() { 
+
   bool keepGoing = true;
   bool shouldStop = false;
-  // bool shouldBeCareful = false;
   bool shouldTurn = false;
+
 
   string rightStr;
   string leftStr;
   string tickStr;
   string compassStr;
+  string rightRotationStr;
+  string leftRotationStr;
+
   string rightMsg;
   string leftMsg;
   string tickMsg;
   string compassMsg;
+  string rightRotationMsg;
+  string leftRotationMsg;
 
   SetSensorType(IN_1, IN_TYPE_LIGHT_ACTIVE);
   SetSensorMode(IN_1, IN_MODE_RAW);
@@ -27,11 +36,13 @@ task main() {
   SetSensorType(IN_2, IN_TYPE_LIGHT_ACTIVE);
   SetSensorMode(IN_2, IN_MODE_RAW);
 
-  //SetSensorType(IN_3, IN_TYPE_CUSTOM);
-  //SetSensorMode(IN_3, IN_MODE_RAW);
   SetSensorLowspeed(S3); 
 
+  //SensorHTCompass(IN_3);
+
   Wait(600); 
+
+  //result = HTCompassCalibrateStop(IN_3);
 
   while (keepGoing == true) {
 
@@ -39,21 +50,30 @@ task main() {
     leftReading = SensorRaw(IN_2);
     tick = CurrentTick();
     compassReading = SensorHTCompass(S3);
+    rightRotation = MotorRotationCount(OUT_A);
+    leftRotation = MotorRotationCount(OUT_B);
 
     rightStr = NumToStr(rightReading);
     leftStr = NumToStr(leftReading);
     tickStr = NumToStr(tick);
     compassStr = NumToStr(compassReading);
+    rightRotationStr = NumToStr(rightRotation);
+    leftRotationStr = NumToStr(leftRotation);
 
     rightMsg = "R Sensor: " + rightStr;
     leftMsg = "L Sensor: " + leftStr;
     tickMsg = "Time: " + tickStr;
     compassMsg = "Compass: " + compassStr;
+    rightRotationMsg = "R Rotations: " + rightRotationStr;
+    leftRotationMsg = "L Rotations: " + leftRotationStr;
+
 
     TextOut(0, LCD_LINE1, rightMsg);
     TextOut(0, LCD_LINE2, leftMsg);
     TextOut(0, LCD_LINE3, tickMsg);
     TextOut(0, LCD_LINE4, compassMsg);
+    TextOut(0, LCD_LINE5, rightRotationMsg);
+    TextOut(0, LCD_LINE6, leftRotationMsg);
 
     shouldStop = ((leftReading < 500) || (rightReading < 500));
     shouldTurn = (abs(leftReading - rightReading) > 15);
