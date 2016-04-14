@@ -3,13 +3,20 @@
 
 int rightReading;
 int leftReading;
-
+long tick;
 
 task main() { 
+  bool keepGoing = true;
+  bool shouldStop = false;
+  // bool shouldBeCareful = false;
+  bool shouldTurn = false;
+
   string rightStr;
   string leftStr;
+  string tickStr;
   string rightMsg;
   string leftMsg;
+  string tickMsg;
 
   SetSensorType(IN_1, IN_TYPE_LIGHT_ACTIVE);
   SetSensorMode(IN_1, IN_MODE_RAW);
@@ -17,15 +24,48 @@ task main() {
   SetSensorType(IN_2, IN_TYPE_LIGHT_ACTIVE);
   SetSensorMode(IN_2, IN_MODE_RAW);
 
-  while (true) {
-    OnFwd(OUT_AB, SpeedSlow);
+  Wait(600); 
+
+  while (keepGoing == true) {
+    tick = CurrentTick();
+
     rightReading = SensorRaw(IN_1);
     leftReading = SensorRaw(IN_2);
+
     rightStr = NumToStr(rightReading);
     leftStr = NumToStr(leftReading);
+    tickStr = NumToStr(tick);
+
     rightMsg = "R Sensor: " + rightStr;
     leftMsg = "L Sensor: " + leftStr;
+    tickMsg = "Time: " + tickStr;
+
     TextOut(0, LCD_LINE1, rightMsg);
     TextOut(0, LCD_LINE2, leftMsg);
+    TextOut(0, LCD_LINE3, tickMsg);
+
+    shouldStop = ((leftReading < 500) || (rightReading < 500));
+    shouldTurn = (abs(leftReading - rightReading) > 15);
+
+    if (shouldStop) {
+      OnFwd(OUT_AB, 30);
+      Off(OUT_AB);
+      keepGoing = false;
+    } else {
+      keepGoing = true;
+    }
+    if (shouldTurn) {
+      if (leftReading < rightReading) {
+        OnFwd(OUT_A, 80);
+        OnFwd(OUT_B, 50);
+      }
+      else
+      {
+        OnFwd(OUT_A, 50);
+        OnFwd(OUT_B, 80);
+      }
+    } else {
+      OnFwd(OUT_AB, 100);
+    }
   }
 }
