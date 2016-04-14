@@ -1,0 +1,31 @@
+#define SpeedSlow 50
+#define SpeedFast 100
+
+int rightReading;
+int leftReading;
+
+
+task main() { 
+  string rightStr;
+  string leftStr;
+  string rightMsg;
+  string leftMsg;
+
+  SetSensorType(IN_1, IN_TYPE_LIGHT_ACTIVE);
+  SetSensorMode(IN_1, IN_MODE_RAW);
+  
+  SetSensorType(IN_2, IN_TYPE_LIGHT_ACTIVE);
+  SetSensorMode(IN_2, IN_MODE_RAW);
+
+  while (true) {
+    OnFwd(OUT_AB, SpeedSlow);
+    rightReading = SensorRaw(IN_1);
+    leftReading = SensorRaw(IN_2);
+    rightStr = NumToStr(rightReading);
+    leftStr = NumToStr(leftReading);
+    rightMsg = "R Sensor: " + rightStr;
+    leftMsg = "L Sensor: " + leftStr;
+    TextOut(0, LCD_LINE1, rightMsg);
+    TextOut(0, LCD_LINE2, leftMsg);
+  }
+}
