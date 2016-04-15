@@ -1,12 +1,28 @@
 #define SpeedSlow 50
 #define SpeedFast 100
 
+#define FILE_NAME "journey.dat"
+#define ENTRIES = 64
+#define ENTRY_SIZE = 14
+#define FILE_SIZE = (ENTRY_SIZE * ENTRIES)
+
+byte handle = 0;
+
 int rightReading;
 int leftReading;
 int compassReading;
 long rightRotation;
 long leftRotation;
 long tick = 0;
+long previousTurnTime = 0;
+
+
+struct entry {
+  long totalRightRotations;
+  long totalLeftRotations;
+  long currentTick;
+  int heading;
+};
 
 
 task main() { 
@@ -14,6 +30,8 @@ task main() {
   bool keepGoing = true;
   bool shouldStop = false;
   bool shouldTurn = false;
+  bool shouldBeCareful = false;
+  long timeSinceLastTurn = 0; 
 
 
   string rightStr;
@@ -22,6 +40,7 @@ task main() {
   string compassStr;
   string rightRotationStr;
   string leftRotationStr;
+  string timeSinceLastTurnStr;
 
   string rightMsg;
   string leftMsg;
@@ -29,6 +48,7 @@ task main() {
   string compassMsg;
   string rightRotationMsg;
   string leftRotationMsg;
+  string timeSinceLastTurnMsg;
 
   SetSensorType(IN_1, IN_TYPE_LIGHT_ACTIVE);
   SetSensorMode(IN_1, IN_MODE_RAW);
@@ -38,20 +58,30 @@ task main() {
 
   SetSensorLowspeed(S3); 
 
-  //SensorHTCompass(IN_3);
 
   Wait(600); 
 
-  //result = HTCompassCalibrateStop(IN_3);
 
   while (keepGoing == true) {
+    entry thisPosition;
 
     rightReading = SensorRaw(IN_1);
     leftReading = SensorRaw(IN_2);
     tick = CurrentTick();
-    compassReading = SensorHTCompass(S3);
     rightRotation = MotorRotationCount(OUT_A);
     leftRotation = MotorRotationCount(OUT_B);
+    
+    thisPosition.currentTick = CurrentTick();
+    thisPosition.totalRightRotations = MotorRotationCount(OUT_A);
+    thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
+    thisPosition.heading = SensorHTCompass(S3);
+
+
+    shouldStop = ((leftReading < 500) || (rightReading < 500));
+    shouldTurn = (abs(leftReading - rightReading) > 15);
+    timeSinceLastTurn = tick - previousTurnTime;
+    shouldBeCareful = ((leftReading < 700) && (rightReading < 700));
+
 
     rightStr = NumToStr(rightReading);
     leftStr = NumToStr(leftReading);
@@ -59,6 +89,8 @@ task main() {
     compassStr = NumToStr(compassReading);
     rightRotationStr = NumToStr(rightRotation);
     leftRotationStr = NumToStr(leftRotation);
+    timeSinceLastTurnStr = NumToStr(timeSinceLastTurn);
+
 
     rightMsg = "R Sensor: " + rightStr;
     leftMsg = "L Sensor: " + leftStr;
@@ -66,6 +98,7 @@ task main() {
     compassMsg = "Compass: " + compassStr;
     rightRotationMsg = "R Rotations: " + rightRotationStr;
     leftRotationMsg = "L Rotations: " + leftRotationStr;
+    timeSinceLastTurnMsg = "Last Turn: " + timeSinceLastTurnStr;
 
 
     TextOut(0, LCD_LINE1, rightMsg);
@@ -74,9 +107,8 @@ task main() {
     TextOut(0, LCD_LINE4, compassMsg);
     TextOut(0, LCD_LINE5, rightRotationMsg);
     TextOut(0, LCD_LINE6, leftRotationMsg);
-
-    shouldStop = ((leftReading < 500) || (rightReading < 500));
-    shouldTurn = (abs(leftReading - rightReading) > 15);
+    TextOut(0, LCD_LINE7, timeSinceLastTurnMsg);
+   
 
     if (shouldStop) {
       OnFwd(OUT_AB, 30);
@@ -85,18 +117,48 @@ task main() {
     } else {
       keepGoing = true;
     }
-    if (shouldTurn) {
-      if (leftReading < rightReading) {
-        OnFwd(OUT_A, 80);
-        OnFwd(OUT_B, 0);
+
+    if (shouldBeCareful)
+    {
+      OnFwd(OUT_AB, 25);
+    }
+    else
+    {
+      if (shouldTurn)
+      {
+        if (timeSinceLastTurn < 15000)
+        {
+          if (leftReading < rightReading) {
+            previousTurnTime = CurrentTick();
+            OnFwd(OUT_A, 80);
+            OnFwd(OUT_B, 0);
+          }
+          else
+          {
+            previousTurnTime = CurrentTick();
+            OnFwd(OUT_A, 0);
+            OnFwd(OUT_B, 80);
+          }
+        }
+        else
+        {
+          if (leftReading < rightReading) {
+            previousTurnTime = CurrentTick();
+            OnFwd(OUT_A, 50);
+            OnFwd(OUT_B, 25);
+          }
+          else
+          {
+            previousTurnTime = CurrentTick();
+            OnFwd(OUT_A, 25);
+            OnFwd(OUT_B, 50);
+          }
+        }
       }
       else
       {
-        OnFwd(OUT_A, 0);
-        OnFwd(OUT_B, 80);
+        OnFwd(OUT_AB, 75);
       }
-    } else {
-      OnFwd(OUT_AB, 100);
     }
   }
 }
