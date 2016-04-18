@@ -1,0 +1,77 @@
+#define SpeedSlow 50
+#define SpeedFast 100
+
+
+int avgReading(byte port, int n) {
+  int i;
+  int reading = 0;
+  int oldReading = 0;
+  int newReading = 0;
+
+  string debugStr;
+  string debugMsg;
+
+  for(i = 0; i < n; i++) {
+    oldReading = newReading;
+    reading = SensorRaw(port);
+    newReading = reading + oldReading;
+    debugStr = NumToStr(n);
+    debugMsg = "Got reading: " + debugStr;
+    TextOut(0, LCD_LINE8, debugMsg);
+  }
+  return(newReading/n);
+}
+
+int avgUltraReading(byte port, int n) {
+  int i;
+  int reading = 0;
+  int oldReading = 0;
+  int newReading = 0;
+
+  SetSensorLowspeed(IN_3);
+  SetSensorLowspeed(IN_4);
+
+  for(i = 0; i < n; i++) {
+    oldReading = newReading;
+    reading = SensorUS(port);
+    newReading = reading + oldReading;
+  }
+  return(newReading/n);
+}
+
+task main() { 
+  int ultraReading;
+  string ultraStr;
+  string ultraMsg;
+
+  int compassReading;
+  string compassStr;
+  string compassMsg;
+
+  Wait(600); 
+
+  while (true) {
+
+    ultraReading = avgUltraReading(IN_4,5);
+    ultraStr = NumToStr(ultraReading);
+    ultraMsg = "Ultra Sensor: " + ultraStr;
+    TextOut(0, LCD_LINE1, ultraMsg);
+
+    compassReading = avgUltraReading(IN_3,5);
+    compassStr = NumToStr(compassReading);
+    compassMsg = "Compass: " + compassStr;
+    TextOut(0, LCD_LINE2, compassMsg);
+
+    if (abs(ultraReading - 20) >= 5) {
+      if (ultraReading < 20) {
+        OnFwd(OUT_A, 30);
+        OnFwd(OUT_B, 29);
+      } else {
+        OnFwd(OUT_A, 29);
+        OnFwd(OUT_B, 30);
+      }
+    } else {
+      OnFwd(OUT_AB, 50);
+    }
+  }
+}
