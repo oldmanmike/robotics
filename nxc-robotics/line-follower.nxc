@@ -28,17 +28,15 @@ struct entry {
 int avgReading(byte port, int n) {
   int i;
   int reading = 0;
-  string debugStr;
-  string debugMsg;
   int oldReading = 0;
   int newReading = 0;
+  string debugStr;
+  string debugMsg;
+  
   for(i = 0; i < n; i++) {
     oldReading = newReading;
     reading = SensorRaw(port);
     newReading = reading + oldReading;
-    debugStr = NumToStr(n);
-    debugMsg = "Got reading: " + debugStr;
-    TextOut(0, LCD_LINE8, debugMsg);
   }
   return(newReading/n);
 }
@@ -88,17 +86,20 @@ task main() {
     tick = CurrentTick();
     rightRotation = MotorRotationCount(OUT_A);
     leftRotation = MotorRotationCount(OUT_B);
-    
+
+
     thisPosition.currentTick = CurrentTick();
     thisPosition.totalRightRotations = MotorRotationCount(OUT_A);
     thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
     thisPosition.heading = SensorHTCompass(S3);
+
 
     counter = tick % 1000;
     shouldStop = ((leftReading < 500) || (rightReading < 500));
     shouldTurn = (abs(leftReading - rightReading) < 70) && (abs(leftReading - rightReading) > 15);
     timeSinceLastTurn = tick - previousTurnTime;
     shouldBeCareful = ((leftReading > 700) && (rightReading > 700));
+
 
     rightStr = NumToStr(rightReading);
     leftStr = NumToStr(leftReading);
@@ -139,12 +140,12 @@ task main() {
       if (timeSinceLastTurn < 15000) {
         if (leftReading < rightReading) {
           previousTurnTime = CurrentTick();
-          OnFwd(OUT_A, 60);
-          OnFwd(OUT_B, 25);
+          OnFwd(OUT_A, 65);
+          OnFwd(OUT_B, 20);
         } else {
           previousTurnTime = CurrentTick();
-          OnFwd(OUT_A, 25);
-          OnFwd(OUT_B, 60);
+          OnFwd(OUT_A, 20);
+          OnFwd(OUT_B, 65);
         }
       } else {
         if (leftReading < rightReading) {
@@ -159,7 +160,7 @@ task main() {
       }
     } else {
       x = previousTurnTime;
-      OnFwd(OUT_AB, 100);
+      OnFwd(OUT_AB, 80);
     }
   }
 }

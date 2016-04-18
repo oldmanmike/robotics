@@ -40,9 +40,12 @@ int avgUltraReading(byte port, int n) {
 }
 
 task main() { 
-  int ultraReading;
-  string ultraStr;
-  string ultraMsg;
+  int frontUltraReading;
+  int backUltraReading;
+  string frontUltraStr;
+  string frontUltraMsg;
+  string backUltraStr;
+  string backUltraMsg;
 
   int compassReading;
   string compassStr;
@@ -52,18 +55,23 @@ task main() {
 
   while (true) {
 
-    ultraReading = avgUltraReading(IN_4,5);
-    ultraStr = NumToStr(ultraReading);
-    ultraMsg = "Ultra Sensor: " + ultraStr;
-    TextOut(0, LCD_LINE1, ultraMsg);
+    frontUltraReading = avgUltraReading(IN_4, 1);
+    frontUltraStr = NumToStr(frontUltraReading);
+    frontUltraMsg = "Front Ultra: " + frontUltraStr;
+    TextOut(0, LCD_LINE1, frontUltraMsg);
+    
+    backUltraReading = avgUltraReading(IN_4, 1);
+    backUltraStr = NumToStr(backUltraReading);
+    backUltraMsg = "Back Ultra: " + backUltraStr;
+    TextOut(1, LCD_LINE1, backUltraMsg);
 
-    compassReading = avgUltraReading(IN_3,5);
+    compassReading = avgUltraReading(IN_3, 5);
     compassStr = NumToStr(compassReading);
     compassMsg = "Compass: " + compassStr;
     TextOut(0, LCD_LINE2, compassMsg);
 
-    if (abs(ultraReading - 20) >= 5) {
-      if (ultraReading < 20) {
+    if (abs(frontUltraReading - 20) >= 5) {
+      if (frontUltraReading < 20) {
         OnFwd(OUT_A, 30);
         OnFwd(OUT_B, 29);
       } else {
@@ -71,7 +79,7 @@ task main() {
         OnFwd(OUT_B, 30);
       }
     } else {
-      OnFwd(OUT_AB, 50);
+      OnFwd(OUT_AB, 30);
     }
   }
 }
