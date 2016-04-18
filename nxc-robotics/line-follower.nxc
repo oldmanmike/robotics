@@ -8,14 +8,15 @@
 
 byte handle = 0;
 
+int x;
 int rightReading;
 int leftReading;
 int compassReading;
 long rightRotation;
 long leftRotation;
 long tick = 0;
+long counter = 0;
 long previousTurnTime = 0;
-
 
 struct entry {
   long totalRightRotations;
@@ -24,6 +25,23 @@ struct entry {
   int heading;
 };
 
+int avgReading(byte port, int n) {
+  int i;
+  int reading = 0;
+  string debugStr;
+  string debugMsg;
+  int oldReading = 0;
+  int newReading = 0;
+  for(i = 0; i < n; i++) {
+    oldReading = newReading;
+    reading = SensorRaw(port);
+    newReading = reading + oldReading;
+    debugStr = NumToStr(n);
+    debugMsg = "Got reading: " + debugStr;
+    TextOut(0, LCD_LINE8, debugMsg);
+  }
+  return(newReading/n);
+}
 
 task main() { 
 
@@ -65,8 +83,8 @@ task main() {
   while (keepGoing == true) {
     entry thisPosition;
 
-    rightReading = SensorRaw(IN_1);
-    leftReading = SensorRaw(IN_2);
+    rightReading = avgReading(IN_1, 1);
+    leftReading = avgReading(IN_2, 1);
     tick = CurrentTick();
     rightRotation = MotorRotationCount(OUT_A);
     leftRotation = MotorRotationCount(OUT_B);
@@ -76,16 +94,15 @@ task main() {
     thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
     thisPosition.heading = SensorHTCompass(S3);
 
-
+    counter = tick % 1000;
     shouldStop = ((leftReading < 500) || (rightReading < 500));
-    shouldTurn = (abs(leftReading - rightReading) > 15);
+    shouldTurn = (abs(leftReading - rightReading) < 70) && (abs(leftReading - rightReading) > 15);
     timeSinceLastTurn = tick - previousTurnTime;
-    shouldBeCareful = ((leftReading < 700) && (rightReading < 700));
-
+    shouldBeCareful = ((leftReading > 700) && (rightReading > 700));
 
     rightStr = NumToStr(rightReading);
     leftStr = NumToStr(leftReading);
-    tickStr = NumToStr(tick);
+    tickStr = NumToStr(counter);
     compassStr = NumToStr(compassReading);
     rightRotationStr = NumToStr(rightRotation);
     leftRotationStr = NumToStr(leftRotation);
@@ -110,55 +127,39 @@ task main() {
     TextOut(0, LCD_LINE7, timeSinceLastTurnMsg);
    
 
-    if (shouldStop) {
-      OnFwd(OUT_AB, 30);
+    if (shouldStop || shouldBeCareful) {
+      OnFwd(OUT_AB, (-100));
       Off(OUT_AB);
       keepGoing = false;
     } else {
       keepGoing = true;
     }
 
-    if (shouldBeCareful)
-    {
-      OnFwd(OUT_AB, 25);
-    }
-    else
-    {
-      if (shouldTurn)
-      {
-        if (timeSinceLastTurn < 15000)
-        {
-          if (leftReading < rightReading) {
-            previousTurnTime = CurrentTick();
-            OnFwd(OUT_A, 80);
-            OnFwd(OUT_B, 0);
-          }
-          else
-          {
-            previousTurnTime = CurrentTick();
-            OnFwd(OUT_A, 0);
-            OnFwd(OUT_B, 80);
-          }
+    if (shouldTurn) {
+      if (timeSinceLastTurn < 15000) {
+        if (leftReading < rightReading) {
+          previousTurnTime = CurrentTick();
+          OnFwd(OUT_A, 60);
+          OnFwd(OUT_B, 25);
+        } else {
+          previousTurnTime = CurrentTick();
+          OnFwd(OUT_A, 25);
+          OnFwd(OUT_B, 60);
         }
-        else
-        {
-          if (leftReading < rightReading) {
-            previousTurnTime = CurrentTick();
-            OnFwd(OUT_A, 50);
-            OnFwd(OUT_B, 25);
-          }
-          else
-          {
-            previousTurnTime = CurrentTick();
-            OnFwd(OUT_A, 25);
-            OnFwd(OUT_B, 50);
-          }
+      } else {
+        if (leftReading < rightReading) {
+          previousTurnTime = CurrentTick();
+          OnFwd(OUT_A, 50);
+          OnFwd(OUT_B, (-50));
+        } else {
+          previousTurnTime = CurrentTick();
+          OnFwd(OUT_A, (-50));
+          OnFwd(OUT_B, 50);
         }
       }
-      else
-      {
-        OnFwd(OUT_AB, 75);
-      }
+    } else {
+      x = previousTurnTime;
+      OnFwd(OUT_AB, 100);
     }
   }
 }
