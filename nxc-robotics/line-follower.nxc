@@ -2,7 +2,7 @@
 #define ENTRY_SIZE = 14
 #define FILE_SIZE = (ENTRY_SIZE * ENTRIES)
 
-
+// Entry struct for holding everything to be writen to disk
 struct entry {
   long totalRightRotations;
   long totalLeftRotations;
@@ -10,6 +10,7 @@ struct entry {
   int heading;
 };
 
+// The actual function that handles the writing of data to disk
 int writeEntry(byte handle, entry e) {
   string lRotationStr;
   string rRotationStr;
@@ -29,6 +30,7 @@ int writeEntry(byte handle, entry e) {
   return result;
 }
 
+// Averages n readings together into a single reading
 int avgReading(byte port, int n) {
   int i;
   int reading = 0;
@@ -47,6 +49,7 @@ int avgReading(byte port, int n) {
 
 
 task main() { 
+  // Variables for sensor readings and other things
   int x;
   int rightReading;
   int leftReading;
@@ -57,15 +60,20 @@ task main() {
   long counter = 0;
   long previousTurnTime = 0;
 
+  // conditional variables for keeping track of 
   bool keepGoing = true;
   bool shouldStop = false;
   bool shouldTurn = false;
   bool shouldBeCareful = false;
   long timeSinceLastTurn = 0; 
-  
+ 
+  // variables for file handling
   byte handle;
   unsigned int result = 0;
-
+  
+  /////////////////////////////////////////////////////////////////////////////
+  // Strings for debug output
+  /////////////////////////////////////////////////////////////////////////////
   string rightStr;
   string leftStr;
   string tickStr;
@@ -81,7 +89,9 @@ task main() {
   string rightRotationMsg;
   string leftRotationMsg;
   string timeSinceLastTurnMsg;
+  /////////////////////////////////////////////////////////////////////////////
 
+  // Configure sensors
   SetSensorType(IN_1, IN_TYPE_LIGHT_ACTIVE);
   SetSensorMode(IN_1, IN_MODE_RAW);
   
@@ -90,36 +100,42 @@ task main() {
 
   SetSensorLowspeed(S3); 
 
-
+  // Initial wait for all sensors to come online
   Wait(600); 
-  
+ 
+  // Create file for logging data entries to
   result = CreateFile("data.dat", 8192, handle);
 
   while (keepGoing == true) {
+    // Declare entry struct for storing readings
     entry thisPosition;
 
+    // Take readings from all sensors for this iteration
     rightReading = avgReading(IN_1, 1);
     leftReading = avgReading(IN_2, 1);
     tick = CurrentTick();
     rightRotation = MotorRotationCount(OUT_A);
     leftRotation = MotorRotationCount(OUT_B);
 
-
+    // Create a new entry for writing to disk
     thisPosition.currentTick = CurrentTick();
     thisPosition.totalRightRotations = MotorRotationCount(OUT_A);
     thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
     thisPosition.heading = SensorHTCompass(S3);
 
+    // Log entry for all readings this iteration to disk
     result = writeEntry(handle, thisPosition);
 
-
+    // calculate conditional variables
     counter = tick % 1000;
     shouldStop = ((leftReading < 500) || (rightReading < 500));
     shouldTurn = (abs(leftReading - rightReading) < 70) && (abs(leftReading - rightReading) > 15);
     timeSinceLastTurn = tick - previousTurnTime;
     shouldBeCareful = ((leftReading > 700) && (rightReading > 700));
-
-
+    
+    ///////////////////////////////////////////////////////////////////////////
+    // Strings for debug output
+    ///////////////////////////////////////////////////////////////////////////
     rightStr = NumToStr(rightReading);
     leftStr = NumToStr(leftReading);
     tickStr = NumToStr(counter);
@@ -145,8 +161,10 @@ task main() {
     TextOut(0, LCD_LINE5, rightRotationMsg);
     TextOut(0, LCD_LINE6, leftRotationMsg);
     TextOut(0, LCD_LINE7, timeSinceLastTurnMsg);
-   
+    ///////////////////////////////////////////////////////////////////////////
 
+
+    // Have we hit the finish line?
     if (shouldStop || shouldBeCareful) {
       OnFwd(OUT_AB, (-100));
       Off(OUT_AB);
@@ -157,6 +175,7 @@ task main() {
     }
 
     if (shouldTurn) {
+      // If we've turned recently, we should turn more than previously
       if (timeSinceLastTurn < 15000) {
         if (leftReading < rightReading) {
           previousTurnTime = CurrentTick();
@@ -179,7 +198,7 @@ task main() {
         }
       }
     } else {
-      x = previousTurnTime;
+      x = previousTurnTime; // note this time as the last time we turned
       OnFwd(OUT_AB, 80);
     }
   }

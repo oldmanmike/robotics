@@ -1,3 +1,4 @@
+// Averages n readings together into a single reading
 int avgReading(byte port, int n) {
   int i;
   int reading = 0;
@@ -18,6 +19,7 @@ int avgReading(byte port, int n) {
   return(newReading/n);
 }
 
+// Averages n ultra sensor readings together into a single reading
 int avgUltraReading(byte port, int n) {
   int i;
   int reading = 0;
@@ -33,27 +35,35 @@ int avgUltraReading(byte port, int n) {
 }
 
 task main() { 
+
+  // Reading Variables
   int frontUltraReading;
   int backUltraReading;
+  int compassReading;
+
+  // Debug info variables
   string frontUltraStr;
   string frontUltraMsg;
   string backUltraStr;
   string backUltraMsg;
-
-  int compassReading;
   string compassStr;
   string compassMsg;
-  
+ 
+  // Configure sensors
   SetSensorLowspeed(IN_1);
   SetSensorMode(IN_1, IN_MODE_RAW);
   SetSensorLowspeed(IN_2);
   SetSensorMode(IN_2, IN_MODE_RAW);
   SetSensorLowspeed(IN_3);
 
+  // Initial wait for all sensors to come online
   Wait(600); 
 
   while (true) {
 
+    //////////////////////////////////////////////
+    // Debug Info for this iteration
+    //////////////////////////////////////////////
     frontUltraReading = avgUltraReading(IN_1, 1);
     frontUltraStr = NumToStr(frontUltraReading);
     frontUltraMsg = "Front Ultra: " + frontUltraStr;
@@ -68,6 +78,8 @@ task main() {
     compassStr = NumToStr(compassReading);
     compassMsg = "Compass: " + compassStr;
     TextOut(0, LCD_LINE3, compassMsg);
+    /////////////////////////////////////////////
+
     OnFwd(OUT_AB, 30);
 /*
     if (abs(frontUltraReading - 20) >= 5) {
