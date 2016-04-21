@@ -1,22 +1,8 @@
-#define SpeedSlow 50
-#define SpeedFast 100
-
 #define FILE_NAME "journey.dat"
 #define ENTRIES = 64
 #define ENTRY_SIZE = 14
 #define FILE_SIZE = (ENTRY_SIZE * ENTRIES)
 
-byte handle = 0;
-
-int x;
-int rightReading;
-int leftReading;
-int compassReading;
-long rightRotation;
-long leftRotation;
-long tick = 0;
-long counter = 0;
-long previousTurnTime = 0;
 
 struct entry {
   long totalRightRotations;
@@ -24,6 +10,25 @@ struct entry {
   long currentTick;
   int heading;
 };
+
+int writeEntry(byte handle, entry e) {
+  string lRotationStr;
+  string rRotationStr;
+  string tickStr;
+  string headingStr;
+  string msg;
+  int result;
+  int actuallyWritten;
+  
+  rRotationStr = NumToStr(e.totalRightRotations);
+  lRotationStr = NumToStr(e.totalLeftRotations);
+  tickStr = NumToStr(e.currentTick);
+  headingStr = NumToStr(e.heading);
+
+  msg = tickStr + " " + headingStr + " " + rRotationStr + " " + lRotationStr;
+  result = WriteLnString(handle, msg, actuallyWritten);
+  return result;
+}
 
 int avgReading(byte port, int n) {
   int i;
@@ -41,14 +46,26 @@ int avgReading(byte port, int n) {
   return(newReading/n);
 }
 
+
 task main() { 
+  int x;
+  int rightReading;
+  int leftReading;
+  int compassReading;
+  long rightRotation;
+  long leftRotation;
+  long tick = 0;
+  long counter = 0;
+  long previousTurnTime = 0;
 
   bool keepGoing = true;
   bool shouldStop = false;
   bool shouldTurn = false;
   bool shouldBeCareful = false;
   long timeSinceLastTurn = 0; 
-
+  
+  byte handle;
+  unsigned int result = 0;
 
   string rightStr;
   string leftStr;
@@ -76,7 +93,8 @@ task main() {
 
 
   Wait(600); 
-
+  
+  result = CreateFile("data.nbc", 8192, handle);
 
   while (keepGoing == true) {
     entry thisPosition;
@@ -92,6 +110,8 @@ task main() {
     thisPosition.totalRightRotations = MotorRotationCount(OUT_A);
     thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
     thisPosition.heading = SensorHTCompass(S3);
+
+    result = writeEntry(handle, thisPosition);
 
 
     counter = tick % 1000;
@@ -132,6 +152,7 @@ task main() {
       OnFwd(OUT_AB, (-100));
       Off(OUT_AB);
       keepGoing = false;
+      result = CloseFile(handle);
     } else {
       keepGoing = true;
     }
