@@ -25,7 +25,7 @@ int writeEntry(byte handle, entry e) {
   tickStr = NumToStr(e.currentTick);
   headingStr = NumToStr(e.heading);
 
-  msg = tickStr + " " + headingStr + " " + rRotationStr + " " + lRotationStr;
+  msg = tickStr + "\t\t" + headingStr + "\t\t" + rRotationStr + "\t\t" + lRotationStr;
   result = WriteLnString(handle, msg, actuallyWritten);
   return result;
 }

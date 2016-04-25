@@ -1,4 +1,30 @@
+// Entry struct for holding everything to be writen to disk
+struct entry {
+  long totalRightRotations;
+  long totalLeftRotations;
+  long currentTick;
+  int heading;
+};
 
+// The actual function that handles the writing of data to disk
+int writeEntry(byte handle, entry e) {
+  string lRotationStr;
+  string rRotationStr;
+  string tickStr;
+  string headingStr;
+  string msg;
+  int result;
+  int actuallyWritten;
+    
+  rRotationStr = NumToStr(e.totalRightRotations);
+  lRotationStr = NumToStr(e.totalLeftRotations);
+  tickStr = NumToStr(e.currentTick);
+  headingStr = NumToStr(e.heading);
+
+  msg = tickStr + "\t\t" + headingStr + "\t\t" + rRotationStr + "\t\t\t" + lRotationStr;
+  result = WriteLnString(handle, msg, actuallyWritten);
+  return result;
+}
 
 // Averages n readings together into a single reading
 int avgReading(byte port, int n) {
@@ -37,12 +63,23 @@ int avgUltraReading(byte port, int n) {
 }
 
 task main() { 
+  entry thisPosition;
+
+  // State Variables
+  long rightRotation;
+  long leftRotation;
+  long tick;
 
   // Reading Variables
   int frontUltraReading;
   int backUltraReading;
   int startCompassReading;
   int compassReading;
+ 
+  // variables for file handling
+  byte handle;
+  unsigned int result = 0;
+  int actuallyWritten;
 
   // Debug info variables
   string str;
@@ -56,13 +93,15 @@ task main() {
   SetSensorLowspeed(IN_3);
 
   ResetTachoCount(OUT_AB);
+  ResetRotationCount(OUT_AB);
   
   startCompassReading = 0;
 
   // Initial wait for all sensors to come online
   Wait(1000); 
-  startCompassReading = avgUltraReading(IN_3, 10);
-  Wait(1000); 
+
+  result = CreateFile("wall.dat", 8192, handle);
+  result = WriteLnString(handle, "Tick\t\tCompass\t\tRight Rotation\t\tLeft Rotation", actuallyWritten);
 
 
   while (true) {
@@ -88,7 +127,17 @@ task main() {
     msg = "Current: " + str;
     TextOut(0, LCD_LINE4, msg);
 
+    tick = CurrentTick();
+    rightRotation = MotorRotationCount(OUT_A);
+    leftRotation = MotorRotationCount(OUT_B);
 
+    // Create a new entry for writing to disk
+    thisPosition.currentTick = CurrentTick();
+    thisPosition.totalRightRotations = MotorRotationCount(OUT_A);
+    thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
+    thisPosition.heading = SensorHTCompass(S3);
+
+    result = writeEntry(handle, thisPosition);
     /////////////////////////////////////////////
     if (abs(frontUltraReading - backUltraReading) > 2) {
       if (frontUltraReading < backUltraReading) {
