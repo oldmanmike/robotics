@@ -122,7 +122,7 @@ task main() {
     thisPosition.totalRightRotations = MotorRotationCount(OUT_A);
     thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
     thisPosition.heading = SensorHTCompass(S3);
-
+    
     // Log entry for all readings this iteration to disk
     result = writeEntry(handle, thisPosition);
 
@@ -132,7 +132,8 @@ task main() {
     shouldTurn = (abs(leftReading - rightReading) < 70) && (abs(leftReading - rightReading) > 15);
     timeSinceLastTurn = tick - previousTurnTime;
     shouldBeCareful = ((leftReading > 700) && (rightReading > 700));
-    
+
+
     ///////////////////////////////////////////////////////////////////////////
     // Strings for debug output
     ///////////////////////////////////////////////////////////////////////////

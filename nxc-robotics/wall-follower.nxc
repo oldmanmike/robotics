@@ -1,3 +1,5 @@
+
+
 // Averages n readings together into a single reading
 int avgReading(byte port, int n) {
   int i;
@@ -39,15 +41,12 @@ task main() {
   // Reading Variables
   int frontUltraReading;
   int backUltraReading;
+  int startCompassReading;
   int compassReading;
 
   // Debug info variables
-  string frontUltraStr;
-  string frontUltraMsg;
-  string backUltraStr;
-  string backUltraMsg;
-  string compassStr;
-  string compassMsg;
+  string str;
+  string msg;
  
   // Configure sensors
   SetSensorLowspeed(IN_1);
@@ -56,8 +55,15 @@ task main() {
   SetSensorMode(IN_2, IN_MODE_RAW);
   SetSensorLowspeed(IN_3);
 
+  ResetTachoCount(OUT_AB);
+  
+  startCompassReading = 0;
+
   // Initial wait for all sensors to come online
-  Wait(600); 
+  Wait(1000); 
+  startCompassReading = avgUltraReading(IN_3, 10);
+  Wait(1000); 
+
 
   while (true) {
 
@@ -65,23 +71,43 @@ task main() {
     // Debug Info for this iteration
     //////////////////////////////////////////////
     frontUltraReading = avgUltraReading(IN_1, 1);
-    frontUltraStr = NumToStr(frontUltraReading);
-    frontUltraMsg = "Front Ultra: " + frontUltraStr;
-    TextOut(0, LCD_LINE1, frontUltraMsg);
-    
+    str = NumToStr(frontUltraReading);
+    msg = "Front Ultra: " + str;
+    TextOut(0, LCD_LINE1, msg);
+
     backUltraReading = avgUltraReading(IN_2, 1);
-    backUltraStr = NumToStr(backUltraReading);
-    backUltraMsg = "Back Ultra: " + backUltraStr;
-    TextOut(0, LCD_LINE2, backUltraMsg);
+    str = NumToStr(backUltraReading);
+    msg = "Back Ultra: " + str;
+    TextOut(0, LCD_LINE2, msg);
 
+    str = NumToStr(startCompassReading);
+    msg = "Original: " + str;
+    TextOut(0, LCD_LINE3, msg);
+
+    compassReading = 0;
     compassReading = avgUltraReading(IN_3, 5);
-    compassStr = NumToStr(compassReading);
-    compassMsg = "Compass: " + compassStr;
-    TextOut(0, LCD_LINE3, compassMsg);
-    /////////////////////////////////////////////
+    str = NumToStr(compassReading);
+    msg = "Current: " + str;
+    TextOut(0, LCD_LINE4, msg);
 
-    OnFwd(OUT_AB, 30);
-/*
+
+    /////////////////////////////////////////////
+    /*
+    if (abs(startCompassReading - compassReading) > 3) {
+      if ((startCompassReading - compassReading) >= 0) {
+        OnFwd(OUT_A, 50);
+        OnFwd(OUT_B, 100);
+      } else {
+        OnFwd(OUT_A, 100);
+        OnFwd(OUT_B, 50);
+      }
+    } else {
+      OnFwd(OUT_AB, 100);
+    }
+    */
+    //Wait(100);
+    OnFwd(OUT_AB, 100);
+   /* 
     if (abs(frontUltraReading - 20) >= 5) {
       if (frontUltraReading < 20) {
         OnFwd(OUT_A, 30);
@@ -91,7 +117,7 @@ task main() {
         OnFwd(OUT_B, 30);
       }
     } else {
-      OnFwd(OUT_AB, 30);
+      OnFwdReg(OUT_AB, 30, OUT_REGMODE_SYNC);
     }
     */
   }
