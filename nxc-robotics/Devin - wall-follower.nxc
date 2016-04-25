@@ -1,0 +1,87 @@
+#define RIGHT_MOTOR OUT_B
+#define LEFT_MOTOR  OUT_C
+
+#define lightSensor IN_2
+#define US          IN_4
+
+// Constants
+#define Light_TARGET          100    // raw value for tracking
+#define Light_MINWALL         30     // Min to determine wall is there
+#define STEER_MAX_LEFT       -180   // Max left steer value when Light very close to wall
+#define STEER_INSIDE_CORNER  -100   // Forced left turn when Ultrasonic sensor sees the wall
+#define STEER_OUTSIDE_CORNER 70     // Steer value for outside corner. Not too sharp
+#define MRC_PAST_WALL        360    // Degrees robot should pass wall
+#define US_THRESHOLD         20     // Ultrasonic threshold for turning
+
+// Helper function to limit a power value to a range of -100 to 100
+int LimitPower(int p)
+{
+  if (p > 100)
+    return 100;
+  else if (p < -100)
+    return -100;
+  return p;
+}
+task main()
+{
+  int eopd;
+  int us;
+  int pwrLeft, pwrRight;
+  long mrcRightLastSeeWall = 0;
+  int iSteer;
+
+  SetSensorLowspeed(US);
+
+  SetSensorType(lightSensor, SENSOR_TYPE_LIGHT_ACTIVE);     // Set long range
+  SetSensorMode(lightSensor, SENSOR_MODE_RAW);
+
+  TextOut(0, LCD_LINE1, "HiTechnic");
+  TextOut(6*3, LCD_LINE2, "WallBot");
+
+  TextOut(0, LCD_LINE7, "Right Power Left");
+  while(true) {
+     lightSensor = 1023-SensorRaw(lightSensor);
+     TextOut(0, LCD_LINE4, "light:     ");
+     NumOut(6*5, LCD_LINE4, lightSensor);
+}
+     iSteer = Light_TARGET - lightSensor;
+     if (lightSensor < Light_MINWALL) {
+           // light value is less then the minimum wall value.  This should be the
+           // outside corner and robot needs to take care not to run into
+           // the corner with the right wheel.
+           if (MotorRotationCount(RIGHT_MOTOR)
+                 < (mrcRightLastSeeWall + MRC_PAST_WALL)) {
+             // Robot is too close to turn-in without hitting the corner
+             iSteer = 0;
+           } else {
+             // Robot has now past the point where it is safe to turn right
+             iSteer = STEER_OUTSIDE_CORNER;
+           }
+         } else {
+           // Store motor encoder position that wall is seen
+           mrcRightLastSeeWall = MotorRotationCount(RIGHT_MOTOR);
+
+           if (iSteer < STEER_MAX_LEFT) {
+             // Prevent too sharp a left turn that can cause back of robot to hit wall.
+             iSteer = STEER_MAX_LEFT;
+           } else {
+             us = SensorUS(US);
+             if ((us < US_THRESHOLD) && (iSteer > STEER_INSIDE_CORNER))
+               // If Ultrasonic sensor detects inside corner, force left turn.
+               iSteer = STEER_INSIDE_CORNER;
+           }
+         }
+         TextOut(0, LCD_LINE5, "iSteer:     ");
+             NumOut(6*7, LCD_LINE5, iSteer);
+
+             pwrLeft = LimitPower(100+iSteer);
+             pwrRight = LimitPower(100-iSteer);
+
+             TextOut(0, LCD_LINE8, "                "); // Clear previous text
+             NumOut(0,    LCD_LINE8, pwrRight);
+             NumOut(6*12, LCD_LINE8, pwrLeft);
+
+             OnFwd(LEFT_MOTOR, pwrLeft);
+             OnFwd(RIGHT_MOTOR, pwrRight);
+           }
+         }
