@@ -21,7 +21,7 @@ int writeEntry(byte handle, entry e) {
   tickStr = NumToStr(e.currentTick);
   headingStr = NumToStr(e.heading);
 
-  msg = tickStr + "\t\t" + headingStr + "\t\t" + rRotationStr + "\t\t\t" + lRotationStr;
+  msg = tickStr + "," + headingStr + "," + "(" + lRotationStr + ", " + rRotationStr + ")";
   result = WriteLnString(handle, msg, actuallyWritten);
   return result;
 }
@@ -75,7 +75,8 @@ task main() {
   int backUltraReading;
   int startCompassReading;
   int compassReading;
- 
+  float estimatedDistance = 0;
+
   // variables for file handling
   byte handle;
   unsigned int result = 0;
@@ -100,12 +101,12 @@ task main() {
   // Initial wait for all sensors to come online
   Wait(1000); 
 
-  result = CreateFile("wall.dat", 8192, handle);
-  result = WriteLnString(handle, "Tick\t\tCompass\t\tRight Rotation\t\tLeft Rotation", actuallyWritten);
+  result = CreateFile("wall.csv", 8192, handle);
+  result = WriteLnString(handle, "Tick,Compass,Rotations (L,R)", actuallyWritten);
 
 
   while (true) {
-
+    
     //////////////////////////////////////////////
     // Debug Info for this iteration
     //////////////////////////////////////////////
@@ -139,6 +140,13 @@ task main() {
 
     result = writeEntry(handle, thisPosition);
     /////////////////////////////////////////////
+    estimatedDistance = ((rightRotation + leftRotation) / 4000);
+
+    if (estimatedDistance >= 8) {
+      msg = "Distance Traveled: " + NumToStr(estimatedDistance);
+      result = WriteLnString(handle, msg, actuallyWritten);
+      Stop(true);
+    }
     if (abs(frontUltraReading - backUltraReading) > 2) {
       if (frontUltraReading < backUltraReading) {
         OnFwd(OUT_A, 100);
@@ -148,22 +156,15 @@ task main() {
         OnFwd(OUT_B, 100);
       }
     } else {
-      OnFwd(OUT_AB, 100);
-    }
-    Wait(100);
-    //OnFwd(OUT_AB, 100);
-   /* 
-    if (abs(frontUltraReading - 20) >= 5) {
-      if (frontUltraReading < 20) {
-        OnFwd(OUT_A, 30);
-        OnFwd(OUT_B, 29);
+      if (frontUltraReading > 40) {
+        OnFwd(OUT_A, -50);
+        OnFwd(OUT_B, -25);
+        ResetSensor(IN_2);
+        ResetSensor(IN_4);
+        Wait(1000);
       } else {
-        OnFwd(OUT_A, 29);
-        OnFwd(OUT_B, 30);
+        OnFwd(OUT_AB, 100);
       }
-    } else {
-      OnFwdReg(OUT_AB, 30, OUT_REGMODE_SYNC);
     }
-    */
   }
 }
