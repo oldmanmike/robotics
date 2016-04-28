@@ -12,18 +12,19 @@ int writeEntry(byte handle, entry e) {
   string rRotationStr;
   string frontUltraSonic;
   string backUltraSonic;
+  string forwardUltraSonic;
   string tickStr;
   string headingStr;
   string msg;
   int result;
   int actuallyWritten;
-    
+
   rRotationStr = NumToStr(e.totalRightRotations);
   lRotationStr = NumToStr(e.totalLeftRotations);
   tickStr = NumToStr(e.currentTick);
   headingStr = NumToStr(e.heading);
 
-  msg = tickStr + "," + headingStr + "," + frontUltraSonic + "," + backUltraSonic + "," + lRotationStr + ", " + rRotationStr;
+  msg = tickStr + "," + headingStr + "," + frontUltraSonic + "," + backUltraSonic + "," + forwardUltraSonic + "," + lRotationStr + ", " + rRotationStr;
   result = WriteLnString(handle, msg, actuallyWritten);
   return result;
 }
@@ -64,7 +65,7 @@ int avgUltraReading(byte port, int n) {
   return(newReading/n);
 }
 
-task main() { 
+task main() {
   entry thisPosition;
 
   // State Variables
@@ -75,6 +76,7 @@ task main() {
   // Reading Variables
   int frontUltraReading;
   int backUltraReading;
+  int forwardUltaReading;
   int startCompassReading;
   int compassReading;
   float estimatedDistance = 0;
@@ -87,28 +89,32 @@ task main() {
   // Debug info variables
   string str;
   string msg;
- 
+
   // Configure sensors
-  SetSensorLowspeed(IN_4);
+  SetSensorLowspeed(IN_4); //font UltraSonic
   SetSensorMode(IN_4, IN_MODE_RAW);
-  SetSensorLowspeed(IN_2);
+  SetSensorLowspeed(IN_2); //back UltraSonic
   SetSensorMode(IN_2, IN_MODE_RAW);
+  SetSensorLowspeed(IN_1);
+  SetSensorMode(IN_1, IN_MODE_RAW); //Forward UltraSonic
   SetSensorLowspeed(IN_3);
+
+
 
   ResetTachoCount(OUT_AB);
   ResetRotationCount(OUT_AB);
-  
+
   startCompassReading = 0;
 
   // Initial wait for all sensors to come online
-  Wait(1000); 
+  Wait(1000);
 
   result = CreateFile("wall.csv", 8192, handle);
-  result = WriteLnString(handle, "Tick,Compass,Front UltraSonic,Back UltraSonic,Left Rotations,Right Rotations", actuallyWritten);
+  result = WriteLnString(handle, "Tick,Compass,Front UltraSonic,Back UltraSonic, Forward Ultrasonic,Left Rotations,Right Rotations", actuallyWritten);
 
 
   while (true) {
-    
+
     //////////////////////////////////////////////
     // Debug Info for this iteration
     //////////////////////////////////////////////
@@ -117,12 +123,18 @@ task main() {
     str = NumToStr(frontUltraReading);
     msg = "Front Ultra: " + str;
     TextOut(0, LCD_LINE1, msg);
-    
+
     backUltraReading = 0;
     backUltraReading = avgUltraReading(IN_2, 1);
     str = NumToStr(backUltraReading);
     msg = "Back Ultra: " + str;
     TextOut(0, LCD_LINE2, msg);
+
+    forwardUltaReading = 0;
+    forwardUltaReading = avgUltraReading(IN_4, 1);
+    str = NumToStr(forwardUltaReading);
+    msg = "Forward Ultra: " + str;
+    TextOut(0, LCD_LINE3, msg);
 
     compassReading = 0;
     compassReading = avgUltraReading(IN_3, 5);
@@ -149,6 +161,13 @@ task main() {
       result = WriteLnString(handle, msg, actuallyWritten);
       Stop(true);
     }
+    if (forwardUltaReading < 45){
+    OnFwd(OUT_A, 0);
+    OnFwd(OUT_B, 50);
+    }else{
+      OnFwd(OUT_AB,50);
+      }
+
     if (abs(frontUltraReading - backUltraReading) > 2) {
       if (frontUltraReading < backUltraReading) {
         OnFwd(OUT_A, 50);
