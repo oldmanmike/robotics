@@ -10,6 +10,8 @@ struct entry {
 int writeEntry(byte handle, entry e) {
   string lRotationStr;
   string rRotationStr;
+  string frontUltraSonic;
+  string backUltraSonic;
   string tickStr;
   string headingStr;
   string msg;
@@ -21,7 +23,7 @@ int writeEntry(byte handle, entry e) {
   tickStr = NumToStr(e.currentTick);
   headingStr = NumToStr(e.heading);
 
-  msg = tickStr + "," + headingStr + "," + "(" + lRotationStr + ", " + rRotationStr + ")";
+  msg = tickStr + "," + headingStr + "," + frontUltraSonic + "," + backUltraSonic + "," + lRotationStr + ", " + rRotationStr;
   result = WriteLnString(handle, msg, actuallyWritten);
   return result;
 }
@@ -102,7 +104,7 @@ task main() {
   Wait(1000); 
 
   result = CreateFile("wall.csv", 8192, handle);
-  result = WriteLnString(handle, "Tick,Compass,Rotations (L,R)", actuallyWritten);
+  result = WriteLnString(handle, "Tick,Compass,Front UltraSonic,Back UltraSonic,Left Rotations,Right Rotations", actuallyWritten);
 
 
   while (true) {
