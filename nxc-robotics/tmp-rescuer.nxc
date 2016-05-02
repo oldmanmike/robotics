@@ -1,3 +1,4 @@
+
 // Entry struct for holding everything to be writen to disk
 struct entry {
   long totalRightRotations;
@@ -52,17 +53,38 @@ int avgReading(byte port, int n) {
 
 // Averages n ultra sensor readings together into a single reading
 int avgUltraReading(byte port, int n) {
-  int i;
+  int i = 0;
   int reading = 0;
   int oldReading = 0;
   int newReading = 0;
-
+  
   for(i = 0; i < n; i++) {
     oldReading = newReading;
     reading = SensorUS(port);
     newReading = reading + oldReading;
   }
   return(newReading/n);
+}
+
+int smoothUltraReading(byte port, int n) {
+  int i = 0;
+  int reading = 0;
+  int sketchyReading = 0;
+  int newReading = 0;
+  int oldReading = 0;
+  while (i < n) {
+    sketchyReading = SensorUS(port);
+    TextOut(0, LCD_LINE7, NumToStr(sketchyReading));
+    if (sketchyReading < 50) {
+      oldReading = newReading;
+      reading = sketchyReading;
+      TextOut(0, LCD_LINE8, NumToStr(reading));
+      newReading = reading + oldReading;
+      i++;
+    }
+  }
+
+  return (newReading/n);
 }
 
 task main() {
@@ -76,8 +98,7 @@ task main() {
   // Reading Variables
   int frontUltraReading;
   int backUltraReading;
-  int forwardUltaReading;
-  //int startCompassReading;
+  int forwardUltraReading;
   int compassReading;
   //float estimatedDistance = 0;
 
@@ -107,7 +128,7 @@ task main() {
   SetSensorLowspeed(IN_1); //Forward UltraSonic
   SetSensorMode(IN_1, IN_MODE_RAW);
   */
-  SetSensorLowspeed(IN_3);
+  SetSensorLowspeed(IN_4);
 
 
   ResetTachoCount(OUT_AB);
@@ -118,82 +139,92 @@ task main() {
 
   //result = CreateFile("wall.csv", 8192, handle);
   //result = WriteLnString(handle, "Tick,Compass,Front UltraSonic,Back UltraSonic, Forward Ultrasonic,Left Rotations,Right Rotations", actuallyWritten);
-
-
+  int forwardHistory[];
+  int frontHistory[];
+  int backHistory[];
+  int compassHistory[];
   while (true) {
+    int i;
+    int size = 100;
+    ArrayInit(forwardHistory, 0, size);
+    ArrayInit(frontHistory, 0, size);
+    ArrayInit(backHistory, 0, size);
+    ArrayInit(compassHistory, 0, size);
     //////////////////////////////////////////////
     // Debug Info for this iteration
     //////////////////////////////////////////////
-    SetSensorLowspeed(IN_1); //Forward UltraSonic
-    SetSensorMode(IN_1, IN_MODE_RAW);
-    frontUltraReading = 0;
-    frontUltraReading = avgUltraReading(IN_1, 5);
-    str1 = NumToStr(frontUltraReading);
-    msg1 = "Front Ultra: " + str1;
-    TextOut(0, LCD_LINE1, msg1);
-    ResetSensor(IN_1);
 
-    SetSensorLowspeed(IN_2); //back UltraSonic 
-    SetSensorMode(IN_2, IN_MODE_RAW);
-    backUltraReading = 0;
-    backUltraReading = avgUltraReading(IN_2, 5);
-    str2 = NumToStr(backUltraReading);
-    msg2 = "Back Ultra: " + str2;
-    TextOut(0, LCD_LINE2, msg2);
-    ResetSensor(IN_2);
+    for (i = 0; i < size; i++) {
+      SetSensorLowspeed(IN_1); //font UltraSonic
+      SetSensorMode(IN_1, IN_MODE_RAW);
+      forwardUltraReading = 0;
+      forwardUltraReading = smoothUltraReading(IN_1, 1);
+      forwardHistory[i] = forwardUltraReading;
+      str3 = NumToStr(forwardUltraReading);
+      msg3 = "Forward: " + str3;
+      TextOut(0, LCD_LINE3, msg3);
+      ResetSensor(IN_1);
+     
+      
+      SetSensorLowspeed(IN_2); //Forward UltraSonic
+      SetSensorMode(IN_2, IN_MODE_RAW);
+      frontUltraReading = 0;
+      frontUltraReading = smoothUltraReading(IN_2, 1);
+      frontHistory[i] = frontUltraReading;
+      str1 = NumToStr(frontUltraReading);
+      msg1 = "Front Ultra: " + str1;
+      TextOut(0, LCD_LINE1, msg1);
+      ResetSensor(IN_2);
 
-    SetSensorLowspeed(IN_4); //font UltraSonic
-    SetSensorMode(IN_4, IN_MODE_RAW);
-    forwardUltaReading = 0;
-    forwardUltaReading = avgUltraReading(IN_4, 5);
-    str3 = NumToStr(forwardUltaReading);
-    msg3 = "Forward: " + str3;
-    TextOut(0, LCD_LINE3, msg3);
-    ResetSensor(IN_4);
+      SetSensorLowspeed(IN_3); //back UltraSonic 
+      SetSensorMode(IN_3, IN_MODE_RAW);
+      backUltraReading = 0;
+      backUltraReading = smoothUltraReading(IN_3, 1);
+      backHistory[i] = backUltraReading;
+      str2 = NumToStr(backUltraReading);
+      msg2 = "Back Ultra: " + str2;
+      TextOut(0, LCD_LINE2, msg2);
+      ResetSensor(IN_3);
 
-    compassReading = 0;
-    compassReading = avgUltraReading(IN_3, 5);
-    str4 = NumToStr(compassReading);
-    msg4 = "Current: " + str4;
-    TextOut(0, LCD_LINE4, msg4);
-    ResetSensor(IN_3);
+      compassReading = 0;
+      compassReading = avgUltraReading(IN_4, 5);
+      compassHistory[i] = compassReading;
+      str4 = NumToStr(compassReading);
+      msg4 = "Current: " + str4;
+      TextOut(0, LCD_LINE4, msg4);
+      ResetSensor(IN_4);
 
-    //tick = CurrentTick();
-    //rightRotation = MotorRotationCount(OUT_A);
-    //leftRotation = MotorRotationCount(OUT_B);
+      tick = CurrentTick();
+      rightRotation = MotorRotationCount(OUT_A);
+      leftRotation = MotorRotationCount(OUT_B);
 
-    // Create a new entry for writing to disk
-    //thisPosition.currentTick = CurrentTick();
-    //thisPosition.totalRightRotations = MotorRotationCount(OUT_A);
-    //thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
-    //thisPosition.heading = SensorHTCompass(S3);
+      // Create a new entry for writing to disk
+      //thisPosition.currentTick = CurrentTick();
+      //thisPosition.totalRightRotations = MotorRotationCount(OUT_A);
+      //thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
+      //thisPosition.heading = SensorHTCompass(S3);
 
-    //result = writeEntry(handle, thisPosition);
-    /////////////////////////////////////////////
-    //estimatedDistance = ((rightRotation + leftRotation) / 4000);
-        
-    if (forwardUltaReading < 20){
-    OnFwd(OUT_A, 50);
-    OnFwd(OUT_B, 0);
-    }
-    /*
-    if (abs(frontUltraReading - backUltraReading) > 2) {
-      if (frontUltraReading < backUltraReading) {
-        OnFwd(OUT_A, 50);
-        OnFwd(OUT_B, 40);
-      } else {
-        OnFwd(OUT_A, 40);
-        OnFwd(OUT_B, 50);
+      //result = writeEntry(handle, thisPosition);
+      /////////////////////////////////////////////
+      //estimatedDistance = ((rightRotation + leftRotation) / 4000);
+      /*        
+      if (forwardUltaReading < 50){
+      OnFwd(OUT_A, 50);
+      OnFwd(OUT_B, 0);
       }
-    } else {
-      if (frontUltraReading > 40) {
-        OnFwd(OUT_A, -50);
-        OnFwd(OUT_B, -25);
-        Wait(1000);
+      //OnFwd(OUT_A, 0);
+      */ 
+      if (abs(frontUltraReading - backUltraReading) > 1) {
+        if (frontUltraReading < backUltraReading) {
+          OnFwd(OUT_A, 40);
+          OnFwd(OUT_B, 30);
+        } else {
+          OnFwd(OUT_A, 30);
+          OnFwd(OUT_B, 40);
+        }
       } else {
         OnFwd(OUT_AB, 50);
       }
     }
-    */
   }
 }
