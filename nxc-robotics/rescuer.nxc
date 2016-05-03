@@ -8,6 +8,31 @@
  * Implement Rule: If all sensors cannot detect any objects, continue for 5 seconds, then stop.
  */
 
+int smoothUltraReading(byte port, int n) {
+  int i = 0;
+  int reading = 0;
+  int sketchyReading = 0;
+  int newReading = 0;
+  int oldReading = 0;
+
+  while (i < n) {
+    sketchyReading = SensorUS(port);
+    if (sketchyReading > 100) {
+      oldReading = newReading;
+      reading = sketchyReading / 10;
+      newReading = reading + oldReading;
+      i++;
+    } else {
+      oldReading = newReading;
+      reading = sketchyReading;
+      newReading = reading + oldReading;
+      i++;
+    }
+  }
+
+  return (newReading/n);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Composite Events
 ///////////////////////////////////////////////////////////////////////////////
@@ -28,8 +53,8 @@ bool eventFrontBackObjectUnalignedGradual (int now, int frontHistory[], int back
 // Core Events
 ///////////////////////////////////////////////////////////////////////////////
 
-bool isUltraObjectFound (int now, int history[], int foreground, int background) {
-  if (history[now] < background) {
+bool isUltraObjectFound (int now, int history[], int range) {
+  if (history[now] < range) {
     return true;
   } else {
     return false;
@@ -60,6 +85,14 @@ bool isUltraObjectGradualLosing (int now, int ultraHistory[], int foreground, in
   return false;
 }
 
+
+void turnLeft(int degrees) {
+  RotateMotorEx(OUT_AB, 100, degrees, (-100), true, true);
+}
+
+void turnRight(int degrees) {
+  RotateMotorEx(OUT_AB, 100, degrees, (100), true, true);
+}
 
 // Entry struct for holding everything to be writen to disk
 struct entry {
@@ -122,31 +155,6 @@ int avgUltraReading(byte port, int n) {
   return(newReading/n);
 }
 
-int smoothUltraReading(byte port, int n) {
-  int i = 0;
-  int reading = 0;
-  int sketchyReading = 0;
-  int newReading = 0;
-  int oldReading = 0;
-
-  while (i < n) {
-    sketchyReading = SensorUS(port);
-    if (sketchyReading > 100) {
-      oldReading = newReading;
-      reading = sketchyReading / 10;
-      newReading = reading + oldReading;
-      i++;
-    } else {
-      oldReading = newReading;
-      reading = sketchyReading;
-      newReading = reading + oldReading;
-      i++;
-    }
-  }
-
-  return (newReading/n);
-}
-
 task main() {
   // State Variables
   long rightRotation;
@@ -158,7 +166,7 @@ task main() {
   int backUltraReading;
   int forwardUltraReading;
   int compassReading;
-
+  
   // variables for file handling
   //byte handle;
   //unsigned int result = 0;
@@ -196,47 +204,53 @@ task main() {
 
   //result = CreateFile("wall.csv", 8192, handle);
   //result = WriteLnString(handle, "Tick,Compass,Front UltraSonic,Back UltraSonic, Forward Ultrasonic,Left Rotations,Right Rotations", actuallyWritten);
+  
   int forwardHistory[];
   int frontHistory[];
   int backHistory[];
   int compassHistory[];
 
+
   while (true) {
+    
     int i;
-    int size = 100;
+    int size = 20;
     ArrayInit(forwardHistory, 0, size);
     ArrayInit(frontHistory, 0, size);
     ArrayInit(backHistory, 0, size);
     ArrayInit(compassHistory, 0, size);
-
+    
     //////////////////////////////////////////////
     // Debug Info for this iteration
     //////////////////////////////////////////////
 
+    Wait(1000);
+
     for (i = 0; i < size; i++) {
+      
       forwardUltraReading = 0;
-      forwardUltraReading = smoothUltraReading(IN_1, 1);
+      forwardUltraReading = avgUltraReading(IN_1, 1);
       forwardHistory[i] = forwardUltraReading;
       forwardStr = NumToStr(forwardUltraReading);
       forwardMsg = "Forward: " + forwardStr;
       TextOut(0, LCD_LINE1, forwardMsg);
      
       frontUltraReading = 0;
-      frontUltraReading = smoothUltraReading(IN_2, 1);
+      frontUltraReading = smoothUltraReading(IN_2, 5);
       frontHistory[i] = frontUltraReading;
       frontStr = NumToStr(frontUltraReading);
       frontMsg = "Front: " + frontStr;
       TextOut(0, LCD_LINE2, frontMsg);
 
       backUltraReading = 0;
-      backUltraReading = smoothUltraReading(IN_3, 1);
+      backUltraReading = smoothUltraReading(IN_3, 5);
       backHistory[i] = backUltraReading;
       backStr = NumToStr(backUltraReading);
       backMsg = "Back: " + backStr;
       TextOut(0, LCD_LINE3, backMsg);
 
       compassReading = 0;
-      compassReading = smoothUltraReading(IN_4, 1);
+      compassReading = smoothUltraReading(IN_4, 5);
       compassHistory[i] = compassReading;
       compassStr = NumToStr(compassReading);
       compassMsg = "Compass: " + compassStr;
@@ -255,28 +269,45 @@ task main() {
       //result = writeEntry(handle, thisPosition);
       ////////////////////////////////////////////
       //estimatedDistance = ((rightRotation + leftRotation) / 4000);
-
-      /*
-      if (forwardUltaReading < 50){
-      OnFwd(OUT_A, 50);
-      OnFwd(OUT_B, 0);
+       
+      if (isUltraObjectFound(i,forwardHistory,30)) {
+        turnLeft(180);
+        break;
       }
-      //OnFwd(OUT_A, 0);
-      */ 
-      /*
+      
+      if (!(isUltraObjectFound(i,frontHistory,30))) {
+        OnFwdSync(OUT_AB, 50, (-1));
+        Wait(1000);
+        Off(OUT_AB);
+        turnRight(160);
+        OnFwdSync(OUT_AB, 50, (-1));
+        Wait(1000);
+        Off(OUT_AB);
+      }
+      
       if (abs(frontUltraReading - backUltraReading) > 1) {
         if (frontUltraReading < backUltraReading) {
-          OnFwd(OUT_A, 40);
-          OnFwd(OUT_B, 30);
+          OnFwd(OUT_A, 50);
+          Wait(100);
+          Off(OUT_A);
         } else {
-          OnFwd(OUT_A, 30);
-          OnFwd(OUT_B, 40);
+          OnFwd(OUT_B, 50);
+          Wait(100);
+          Off(OUT_B);
         }
       } else {
-        OnFwd(OUT_AB, 50);
+        if ((frontUltraReading < 20) && (backUltraReading < 20)) {
+          OnFwdSync(OUT_AB, 50, (-5));
+          Wait(1000);
+          Off(OUT_AB);
+        } else {
+          OnFwdSync(OUT_AB, 50, (-1));
+          Wait(1000);
+          Off(OUT_AB);
+        }
       }
-      */
     }
     TextOut(0, LCD_LINE6, "Rotate");
+    ClearScreen();
   }
 }
