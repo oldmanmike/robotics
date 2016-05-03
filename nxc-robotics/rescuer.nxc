@@ -1,3 +1,13 @@
+/* TODO
+ * ====
+ * Implement Rule: Move forward, adjusting for compass.
+ * Implement Rule: If unaligned with wall in the short-term, turn to realign.
+ * Implement Rule: If unaligned with wall in the long-term, turn to realign.
+ * Implement Rule: If object up ahead < 20cm away, turn until back sensor is parallel with it.
+ * Implement Rule: If front sensor suddenly loses object, continue until back loses object, then turn 90 degrees.
+ * Implement Rule: If all sensors cannot detect any objects, continue for 5 seconds, then stop.
+ */
+
 
 // Entry struct for holding everything to be writen to disk
 struct entry {
