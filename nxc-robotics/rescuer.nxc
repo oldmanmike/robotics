@@ -60,6 +60,7 @@ bool isUltraObjectGradualLosing (int now, int ultraHistory[], int foreground, in
   return false;
 }
 
+
 // Entry struct for holding everything to be writen to disk
 struct entry {
   long totalRightRotations;
@@ -98,16 +99,10 @@ int avgReading(byte port, int n) {
   int oldReading = 0;
   int newReading = 0;
 
-  string debugStr;
-  string debugMsg;
-
   for(i = 0; i < n; i++) {
     oldReading = newReading;
     reading = SensorRaw(port);
     newReading = reading + oldReading;
-    debugStr = NumToStr(n);
-    debugMsg = "Got reading: " + debugStr;
-    TextOut(0, LCD_LINE8, debugMsg);
   }
   return(newReading/n);
 }
@@ -133,13 +128,17 @@ int smoothUltraReading(byte port, int n) {
   int sketchyReading = 0;
   int newReading = 0;
   int oldReading = 0;
+
   while (i < n) {
     sketchyReading = SensorUS(port);
-    TextOut(0, LCD_LINE7, NumToStr(sketchyReading));
-    if (sketchyReading < 50) {
+    if (sketchyReading > 100) {
+      oldReading = newReading;
+      reading = sketchyReading / 10;
+      newReading = reading + oldReading;
+      i++;
+    } else {
       oldReading = newReading;
       reading = sketchyReading;
-      TextOut(0, LCD_LINE8, NumToStr(reading));
       newReading = reading + oldReading;
       i++;
     }
@@ -216,28 +215,28 @@ task main() {
 
     for (i = 0; i < size; i++) {
       forwardUltraReading = 0;
-      forwardUltraReading = smoothUltraReading(IN_1, 5);
+      forwardUltraReading = smoothUltraReading(IN_1, 1);
       forwardHistory[i] = forwardUltraReading;
       forwardStr = NumToStr(forwardUltraReading);
       forwardMsg = "Forward: " + forwardStr;
       TextOut(0, LCD_LINE1, forwardMsg);
      
       frontUltraReading = 0;
-      frontUltraReading = smoothUltraReading(IN_2, 5);
+      frontUltraReading = smoothUltraReading(IN_2, 1);
       frontHistory[i] = frontUltraReading;
       frontStr = NumToStr(frontUltraReading);
       frontMsg = "Front: " + frontStr;
       TextOut(0, LCD_LINE2, frontMsg);
 
       backUltraReading = 0;
-      backUltraReading = smoothUltraReading(IN_3, 5);
+      backUltraReading = smoothUltraReading(IN_3, 1);
       backHistory[i] = backUltraReading;
       backStr = NumToStr(backUltraReading);
       backMsg = "Back: " + backStr;
       TextOut(0, LCD_LINE3, backMsg);
 
       compassReading = 0;
-      compassReading = avgUltraReading(IN_4, 5);
+      compassReading = smoothUltraReading(IN_4, 1);
       compassHistory[i] = compassReading;
       compassStr = NumToStr(compassReading);
       compassMsg = "Compass: " + compassStr;
