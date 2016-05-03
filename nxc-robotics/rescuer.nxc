@@ -28,7 +28,7 @@ bool eventFrontBackObjectUnalignedGradual (int now, int frontHistory[], int back
 // Core Events
 ///////////////////////////////////////////////////////////////////////////////
 
-bool eventUltraObjectFound (int now, int history[], int foreground, int background) {
+bool isUltraObjectFound (int now, int history[], int foreground, int background) {
   if (history[now] < background) {
     return true;
   } else {
@@ -36,9 +36,7 @@ bool eventUltraObjectFound (int now, int history[], int foreground, int backgrou
   }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
-bool eventUltraObjectLost (int now, int ultraHistory[], int foreground, int background) {
+bool isUltraObjectLost (int now, int ultraHistory[], int foreground, int background) {
   if (ultraHistory[now] > background) {
     return true;
   } else {
@@ -46,31 +44,21 @@ bool eventUltraObjectLost (int now, int ultraHistory[], int foreground, int back
   }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
-bool eventUltraObjectGainingSudden (int now, int ultraHistory[], int foreground, int background) {
+bool isUltraObjectGainingSudden (int now, int ultraHistory[], int foreground, int background) {
   return false;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
-bool eventUltraObjectGradualGaining (int now, int ultraHistory[], int foreground, int background) {
+bool isUltraObjectGradualGaining (int now, int ultraHistory[], int foreground, int background) {
   return false;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
-bool eventUltraObjectSuddenLosing (int now, int ultraHistory[], int foreground, int background) {
+bool isUltraObjectSuddenLosing (int now, int ultraHistory[], int foreground, int background) {
   return false;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
-bool eventUltraObjectGradualLosing (int now, int ultraHistory[], int foreground, int background) {
+bool isUltraObjectGradualLosing (int now, int ultraHistory[], int foreground, int background) {
   return false;
 }
-
-///////////////////////////////////////////////////////////////////////////////
 
 // Entry struct for holding everything to be writen to disk
 struct entry {
