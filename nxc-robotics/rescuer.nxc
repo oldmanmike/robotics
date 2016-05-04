@@ -9,29 +9,38 @@
  */
 
 int smoothUltraReading(byte port, int n) {
-  int i = 0;
+  int i;
+  int avg;
   int reading = 0;
-  int sketchyReading = 0;
-  int newReading = 0;
+  int maxReading = 0;
+  int minReading = 0;
   int oldReading = 0;
+  int newReading = 0;
 
-  while (i < n) {
-    sketchyReading = SensorUS(port);
-    if (sketchyReading > 100) {
-      oldReading = newReading;
-      reading = sketchyReading / 10;
-      newReading = reading + oldReading;
-      i++;
-    } else {
-      oldReading = newReading;
-      reading = sketchyReading;
-      newReading = reading + oldReading;
-      i++;
+  int collection[];
+  ArrayInit(collection, 0, n);
+
+  for (i = 0; i < n; i++) {
+    collection[i] = SensorUS(port);
+    if (collection[i] > maxReading) {
+      maxReading = collection[i];
     }
+    if (collection[i] < minReading) {
+      minReading = collection[i];
+    }
+    newReading = oldReading + collection[i];
+    oldReading = collection[i];
   }
+  
+  avg = newReading / n;
 
-  return (newReading/n);
+  //if (abs(avg - maxReading) || abs(avg - minReading)) {
+    
+  //}
+
+  return (avg);
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Composite Events
@@ -92,6 +101,56 @@ void turnLeft(int degrees) {
 
 void turnRight(int degrees) {
   RotateMotorEx(OUT_AB, 100, degrees, (100), true, true);
+}
+
+void turnRightWithCompass(byte port, int magnitude) {
+  ClearScreen();
+  int current = 0;
+  int target = 0;
+  current = smoothUltraReading(port, 1);
+  if (((current + magnitude) >= 180) || ((current + magnitude) <= 0)) {
+    if ((current + magnitude) >= 180) {
+      target = current + magnitude - 180;
+    } else {
+      target = current + magnitude + 180;
+    }
+  } else {
+    target = current + magnitude;
+  }
+  TextOut(0,LCD_LINE1, NumToStr(current));
+  TextOut(0,LCD_LINE2, NumToStr(target));
+  while (abs(target - current) > 7) {
+    RotateMotorEx(OUT_AB, 30, 10, (100), true, true);
+    current = smoothUltraReading(port, 1);
+    ClearLine(LCD_LINE3);
+    TextOut(0, LCD_LINE3, NumToStr(current));
+  }
+  Off(OUT_AB);
+}
+
+void turnLeftWithCompass(byte port, int magnitude) {
+  ClearScreen();
+  int current = 0;
+  int target = 0;
+  current = smoothUltraReading(port, 1);
+  if (((current + magnitude) >= 180) || ((current + magnitude) <= 0)) {
+    if ((current + magnitude) >= 180) {
+      target = current + magnitude - 180;
+    } else {
+      target = current + magnitude + 180;
+    }
+  } else {
+    target = current + magnitude;
+  }
+  TextOut(0,LCD_LINE1, NumToStr(current));
+  TextOut(0,LCD_LINE2, NumToStr(target));
+  while (abs(target - current) > 7) {
+    RotateMotorEx(OUT_AB, (-30), 10, (-100), true, true);
+    current = smoothUltraReading(port, 1);
+    ClearLine(LCD_LINE3);
+    TextOut(0, LCD_LINE3, NumToStr(current));
+  }
+  Off(OUT_AB);
 }
 
 // Entry struct for holding everything to be writen to disk
@@ -233,27 +292,31 @@ task main() {
       forwardHistory[i] = forwardUltraReading;
       forwardStr = NumToStr(forwardUltraReading);
       forwardMsg = "Forward: " + forwardStr;
+      ClearLine(LCD_LINE1);
       TextOut(0, LCD_LINE1, forwardMsg);
      
       frontUltraReading = 0;
-      frontUltraReading = smoothUltraReading(IN_2, 5);
+      frontUltraReading = smoothUltraReading(IN_2, 1);
       frontHistory[i] = frontUltraReading;
       frontStr = NumToStr(frontUltraReading);
       frontMsg = "Front: " + frontStr;
+      ClearLine(LCD_LINE2);
       TextOut(0, LCD_LINE2, frontMsg);
 
       backUltraReading = 0;
-      backUltraReading = smoothUltraReading(IN_3, 5);
+      backUltraReading = smoothUltraReading(IN_3, 1);
       backHistory[i] = backUltraReading;
       backStr = NumToStr(backUltraReading);
       backMsg = "Back: " + backStr;
+      ClearLine(LCD_LINE3);
       TextOut(0, LCD_LINE3, backMsg);
 
       compassReading = 0;
-      compassReading = smoothUltraReading(IN_4, 5);
+      compassReading = smoothUltraReading(IN_4, 1);
       compassHistory[i] = compassReading;
       compassStr = NumToStr(compassReading);
       compassMsg = "Compass: " + compassStr;
+      ClearLine(LCD_LINE5);
       TextOut(0, LCD_LINE5, compassMsg);
 
       tick = CurrentTick();
@@ -270,21 +333,21 @@ task main() {
       ////////////////////////////////////////////
       //estimatedDistance = ((rightRotation + leftRotation) / 4000);
        
-      if (isUltraObjectFound(i,forwardHistory,30)) {
-        turnLeft(180);
-        break;
+      if (isUltraObjectFound(i,forwardHistory,20)) {
+        //turnLeft(260);
+        turnLeftWithCompass(IN_4, (-50));
       }
-      
+      /* 
       if (!(isUltraObjectFound(i,frontHistory,30))) {
         OnFwdSync(OUT_AB, 50, (-1));
-        Wait(1000);
+        Wait(2000);
         Off(OUT_AB);
-        turnRight(160);
+        turnRightWithCompass(IN_4, 50);
         OnFwdSync(OUT_AB, 50, (-1));
-        Wait(1000);
+        Wait(2500);
         Off(OUT_AB);
       }
-      
+      */ 
       if (abs(frontUltraReading - backUltraReading) > 1) {
         if (frontUltraReading < backUltraReading) {
           OnFwd(OUT_A, 50);
@@ -307,7 +370,5 @@ task main() {
         }
       }
     }
-    TextOut(0, LCD_LINE6, "Rotate");
-    ClearScreen();
   }
 }
