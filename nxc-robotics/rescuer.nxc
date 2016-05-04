@@ -94,15 +94,6 @@ bool isUltraObjectGradualLosing (int now, int ultraHistory[], int foreground, in
   return false;
 }
 
-
-void turnLeft(int degrees) {
-  RotateMotorEx(OUT_AB, 100, degrees, (-100), true, true);
-}
-
-void turnRight(int degrees) {
-  RotateMotorEx(OUT_AB, 100, degrees, (100), true, true);
-}
-
 void turnRightWithCompass(byte port, int magnitude) {
   ClearScreen();
   int current = 0;
@@ -153,52 +144,6 @@ void turnLeftWithCompass(byte port, int magnitude) {
   Off(OUT_AB);
 }
 
-// Entry struct for holding everything to be writen to disk
-struct entry {
-  long totalRightRotations;
-  long totalLeftRotations;
-  long currentTick;
-  int heading;
-};
-
-// The actual function that handles the writing of data to disk
-int writeEntry(byte handle, entry e) {
-  string lRotationStr;
-  string rRotationStr;
-  string frontUltraSonic;
-  string backUltraSonic;
-  string forwardUltraSonic;
-  string tickStr;
-  string headingStr;
-  string msg;
-  int result;
-  int actuallyWritten;
-
-  rRotationStr = NumToStr(e.totalRightRotations);
-  lRotationStr = NumToStr(e.totalLeftRotations);
-  tickStr = NumToStr(e.currentTick);
-  headingStr = NumToStr(e.heading);
-
-  msg = tickStr + "," + headingStr + "," + frontUltraSonic + "," + backUltraSonic + "," + forwardUltraSonic + "," + lRotationStr + ", " + rRotationStr;
-  result = WriteLnString(handle, msg, actuallyWritten);
-  return result;
-}
-
-// Averages n readings together into a single reading
-int avgReading(byte port, int n) {
-  int i;
-  int reading = 0;
-  int oldReading = 0;
-  int newReading = 0;
-
-  for(i = 0; i < n; i++) {
-    oldReading = newReading;
-    reading = SensorRaw(port);
-    newReading = reading + oldReading;
-  }
-  return(newReading/n);
-}
-
 // Averages n ultra sensor readings together into a single reading
 int avgUltraReading(byte port, int n) {
   int i = 0;
@@ -227,20 +172,25 @@ task main() {
   int compassReading;
   
   // variables for file handling
-  //byte handle;
-  //unsigned int result = 0;
-  //int actuallyWritten;
+  byte handle;
+  unsigned int result = 0;
+  int actuallyWritten;
 
   // Debug info variables
   string forwardStr;
   string frontStr;
   string backStr;
   string compassStr;
+  string tickStr;
+  string rRotationStr;
+  string lRotationStr;
 
   string forwardMsg;
   string frontMsg;
   string backMsg;
   string compassMsg;
+
+  string msg;
 
   // Configure sensors
   SetSensorLowspeed(IN_1); //Forward UltraSonic
@@ -261,8 +211,8 @@ task main() {
   // Initial wait for all sensors to come online
   Wait(1000);
 
-  //result = CreateFile("wall.csv", 8192, handle);
-  //result = WriteLnString(handle, "Tick,Compass,Front UltraSonic,Back UltraSonic, Forward Ultrasonic,Left Rotations,Right Rotations", actuallyWritten);
+  result = CreateFile("wall.csv", 8192, handle);
+  result = WriteLnString(handle, "Tick,Compass,Forward Ultrasonic,Front UltraSonic,Back UltraSonic,Left Rotations,Right Rotations", actuallyWritten);
   
   int forwardHistory[];
   int frontHistory[];
@@ -320,21 +270,22 @@ task main() {
       TextOut(0, LCD_LINE5, compassMsg);
 
       tick = CurrentTick();
+      tickStr = NumToStr(tick);
+
       rightRotation = MotorRotationCount(OUT_A);
+      rRotationStr = NumToStr(rightRotation);
+
       leftRotation = MotorRotationCount(OUT_B);
+      lRotationStr = NumToStr(leftRotation);
 
       // Create a new entry for writing to disk
-      //thisPosition.currentTick = CurrentTick();
-      //thisPosition.totalRightRotations = MotorRotationCount(OUT_A);
-      //thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
-      //thisPosition.heading = SensorHTCompass(S3);
+      msg = tickStr + "," + compassStr + "," + forwardStr + "," + frontStr + "," + backStr + "," + lRotationStr + ", " + rRotationStr;
+      result = WriteLnString(handle, msg, actuallyWritten);
 
-      //result = writeEntry(handle, thisPosition);
       ////////////////////////////////////////////
       //estimatedDistance = ((rightRotation + leftRotation) / 4000);
        
       if (isUltraObjectFound(i,forwardHistory,20)) {
-        //turnLeft(260);
         turnLeftWithCompass(IN_4, (-50));
       }
       /* 
