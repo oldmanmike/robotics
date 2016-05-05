@@ -19,7 +19,7 @@ int writeEntry(byte handle, entry e) {
   string msg;
   int result;
   int actuallyWritten;
-  
+
   rRotationStr = NumToStr(e.totalRightRotations);
   lRotationStr = NumToStr(e.totalLeftRotations);
   tickStr = NumToStr(e.currentTick);
@@ -38,7 +38,7 @@ int avgReading(byte port, int n) {
   int newReading = 0;
   string debugStr;
   string debugMsg;
-  
+
   for(i = 0; i < n; i++) {
     oldReading = newReading;
     reading = SensorRaw(port);
@@ -48,7 +48,7 @@ int avgReading(byte port, int n) {
 }
 
 
-task main() { 
+task main() {
   // Variables for sensor readings and other things
   int x;
   int rightReading;
@@ -60,17 +60,17 @@ task main() {
   long counter = 0;
   long previousTurnTime = 0;
 
-  // conditional variables for keeping track of 
+  // conditional variables for keeping track of
   bool keepGoing = true;
   bool shouldStop = false;
   bool shouldTurn = false;
   bool shouldBeCareful = false;
-  long timeSinceLastTurn = 0; 
- 
+  long timeSinceLastTurn = 0;
+
   // variables for file handling
   byte handle;
   unsigned int result = 0;
-  
+
   /////////////////////////////////////////////////////////////////////////////
   // Strings for debug output
   /////////////////////////////////////////////////////////////////////////////
@@ -94,15 +94,15 @@ task main() {
   // Configure sensors
   SetSensorType(IN_1, IN_TYPE_LIGHT_ACTIVE);
   SetSensorMode(IN_1, IN_MODE_RAW);
-  
+
   SetSensorType(IN_2, IN_TYPE_LIGHT_ACTIVE);
   SetSensorMode(IN_2, IN_MODE_RAW);
 
-  SetSensorLowspeed(S3); 
+  SetSensorLowspeed(S3);
 
   // Initial wait for all sensors to come online
-  Wait(600); 
- 
+  Wait(600);
+
   // Create file for logging data entries to
   result = CreateFile("data.dat", 8192, handle);
 
@@ -122,7 +122,7 @@ task main() {
     thisPosition.totalRightRotations = MotorRotationCount(OUT_A);
     thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
     thisPosition.heading = SensorHTCompass(S3);
-    
+
     // Log entry for all readings this iteration to disk
     result = writeEntry(handle, thisPosition);
 
@@ -190,17 +190,17 @@ task main() {
       } else {
         if (leftReading < rightReading) {
           previousTurnTime = CurrentTick();
-          OnFwd(OUT_A, 50);
+          OnFwd(OUT_A, 60);
           OnFwd(OUT_B, (-50));
         } else {
           previousTurnTime = CurrentTick();
           OnFwd(OUT_A, (-50));
-          OnFwd(OUT_B, 50);
+          OnFwd(OUT_B, 60);
         }
       }
     } else {
       x = previousTurnTime; // note this time as the last time we turned
-      OnFwd(OUT_AB, 80);
+      OnFwd(OUT_AB, 70);
     }
   }
 }
