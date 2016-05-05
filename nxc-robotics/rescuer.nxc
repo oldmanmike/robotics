@@ -19,7 +19,7 @@ int smoothUltraReading(byte port, int n) {
 
   int collection[];
   ArrayInit(collection, 0, n);
-
+  
   for (i = 0; i < n; i++) {
     collection[i] = SensorUS(port);
     if (collection[i] > maxReading) {
@@ -32,11 +32,26 @@ int smoothUltraReading(byte port, int n) {
     oldReading = collection[i];
   }
   
-  avg = newReading / n;
+  for (i = 0; i < n; i++) {
+    collection[i] = SensorUS(port);
+    if (collection[i] < 100) {
+      accumReading = oldAccumReading + collection[i];
+    }
+    oldAccumReading = accumReading;
+  }
+ /* 
+  for (i = 0; i < n; i++) {
+    j = i;
+    while ((j > 0) && (collection[j-1] > collection[j])) {
+      tmp = collection[j-1];
+      collection[j-1] = collection[j];
+      collection[j] = tmp;
+      j--;
+    }
+  }
+*/
 
-  //if (abs(avg - maxReading) || abs(avg - minReading)) {
-    
-  //}
+  avg = newReading / n; 
 
   return (avg);
 }
@@ -54,9 +69,6 @@ bool eventFrontBackObjectUnalignedSudden (int now, int frontHistory[], int backH
   }
 }
 
-bool eventFrontBackObjectUnalignedGradual (int now, int frontHistory[], int backHistory[]) {
-  return false;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Core Events
@@ -79,18 +91,6 @@ bool isUltraObjectLost (int now, int ultraHistory[], int foreground, int backgro
 }
 
 bool isUltraObjectGainingSudden (int now, int ultraHistory[], int foreground, int background) {
-  return false;
-}
-
-bool isUltraObjectGradualGaining (int now, int ultraHistory[], int foreground, int background) {
-  return false;
-}
-
-bool isUltraObjectSuddenLosing (int now, int ultraHistory[], int foreground, int background) {
-  return false;
-}
-
-bool isUltraObjectGradualLosing (int now, int ultraHistory[], int foreground, int background) {
   return false;
 }
 
@@ -284,23 +284,38 @@ task main() {
 
       ////////////////////////////////////////////
       //estimatedDistance = ((rightRotation + leftRotation) / 4000);
-       
-      if (isUltraObjectFound(i,forwardHistory,20)) {
+     
+      /*
+      if (!(isUltraObjectFound(i,forwardHistory,70)) && !(isUltraObjectFound(i,frontHistory,70)) && !(isUltraObjectFound(i,backHistory,70))) {
+        PlaySound(SOUND_DOUBLE_BEEP);
+        OnFwdSync(OUT_AB, 50, (-1));
+        Wait(2000);
+        Stop(true);
+      }
+      */
+      if (isUltraObjectFound(i,forwardHistory,30)) {
         PlaySound(SOUND_DOWN);
         turnLeftWithCompass(IN_4, (-50));
       }
       
-      if (!(isUltraObjectFound(i,frontHistory,50))) {
+      if ((abs(frontUltraReading - backUltraReading) > 15) && 
+          !(isUltraObjectFound(i,frontHistory,30)) && 
+          (isUltraObjectFound(i,backHistory,30))) {
         PlaySound(SOUND_UP);
         OnFwdSync(OUT_AB, 50, (-1));
         Wait(2000);
         Off(OUT_AB);
         turnRightWithCompass(IN_4, 50);
-        OnFwdSync(OUT_AB, 50, (-1));
-        Wait(2500);
-        Off(OUT_AB);
+        if (isUltraObjectFound(i,forwardHistory,30)) {
+          PlaySound(SOUND_DOWN);
+          turnLeftWithCompass(IN_4, (-25));
+        } else {
+          OnFwdSync(OUT_AB, 50, (-1));
+          Wait(2500);
+          Off(OUT_AB);
+        }
       }
-
+      
       if (abs(frontUltraReading - backUltraReading) > 1) {
         if (frontUltraReading < backUltraReading) {
           OnFwd(OUT_A, 50);
@@ -312,7 +327,7 @@ task main() {
           Off(OUT_B);
         }
       } else {
-        if ((frontUltraReading < 25) && (backUltraReading < 25)) {
+        if ((frontUltraReading < 30) && (backUltraReading < 30)) {
           OnFwdSync(OUT_AB, 50, (-5));
           Wait(500);
           Off(OUT_AB);
