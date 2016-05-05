@@ -28,6 +28,7 @@ task main() {
   long counter = 0;
   long previousTurnTime = 0;
   int actuallyWritten;
+  long initialTick = 0;
 
   // conditional variables for keeping track of
   bool keepGoing = true;
@@ -76,7 +77,9 @@ task main() {
 
   // Create file for logging data entries to
   result = CreateFile("line.csv", 8192, handle);
-  result = WriteLnString(handle, "Tick,Compass,Left Rotations, Right Rotations", actuallyWritten);
+  result = WriteLnString(handle, "Time (s),Compass,Left Rotations, Right Rotations", actuallyWritten);
+  
+  initialTick = CurrentTick();
 
   while (keepGoing == true) {
     // Take readings from all sensors for this iteration
@@ -85,9 +88,10 @@ task main() {
     tick = CurrentTick();
     rightRotation = MotorRotationCount(OUT_A);
     leftRotation = MotorRotationCount(OUT_B);
+    compassReading = SensorHTCompass(S3);
 
     // calculate conditional variables
-    counter = tick % 1000;
+    counter = (tick - initialTick) / 1000;
     shouldStop = ((leftReading < 500) || (rightReading < 500));
     shouldTurn = (abs(leftReading - rightReading) < 70) && (abs(leftReading - rightReading) > 15);
     timeSinceLastTurn = tick - previousTurnTime;
