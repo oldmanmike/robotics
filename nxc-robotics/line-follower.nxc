@@ -1,35 +1,3 @@
-#define ENTRIES = 64
-#define ENTRY_SIZE = 14
-#define FILE_SIZE = (ENTRY_SIZE * ENTRIES)
-
-// Entry struct for holding everything to be writen to disk
-struct entry {
-  long totalRightRotations;
-  long totalLeftRotations;
-  long currentTick;
-  int heading;
-};
-
-// The actual function that handles the writing of data to disk
-int writeEntry(byte handle, entry e) {
-  string lRotationStr;
-  string rRotationStr;
-  string tickStr;
-  string headingStr;
-  string msg;
-  int result;
-  int actuallyWritten;
-
-  rRotationStr = NumToStr(e.totalRightRotations);
-  lRotationStr = NumToStr(e.totalLeftRotations);
-  tickStr = NumToStr(e.currentTick);
-  headingStr = NumToStr(e.heading);
-
-  msg = tickStr + "\t\t" + headingStr + "\t\t" + rRotationStr + "\t\t" + lRotationStr;
-  result = WriteLnString(handle, msg, actuallyWritten);
-  return result;
-}
-
 // Averages n readings together into a single reading
 int avgReading(byte port, int n) {
   int i;
@@ -59,6 +27,7 @@ task main() {
   long tick = 0;
   long counter = 0;
   long previousTurnTime = 0;
+  int actuallyWritten;
 
   // conditional variables for keeping track of
   bool keepGoing = true;
@@ -89,6 +58,8 @@ task main() {
   string rightRotationMsg;
   string leftRotationMsg;
   string timeSinceLastTurnMsg;
+  string msg;
+
   /////////////////////////////////////////////////////////////////////////////
 
   // Configure sensors
@@ -104,27 +75,16 @@ task main() {
   Wait(600);
 
   // Create file for logging data entries to
-  result = CreateFile("data.dat", 8192, handle);
+  result = CreateFile("line.csv", 8192, handle);
+  result = WriteLnString(handle, "Tick,Compass,Left Rotations, Right Rotations", actuallyWritten);
 
   while (keepGoing == true) {
-    // Declare entry struct for storing readings
-    entry thisPosition;
-
     // Take readings from all sensors for this iteration
     rightReading = avgReading(IN_1, 1);
     leftReading = avgReading(IN_2, 1);
     tick = CurrentTick();
     rightRotation = MotorRotationCount(OUT_A);
     leftRotation = MotorRotationCount(OUT_B);
-
-    // Create a new entry for writing to disk
-    thisPosition.currentTick = CurrentTick();
-    thisPosition.totalRightRotations = MotorRotationCount(OUT_A);
-    thisPosition.totalLeftRotations = MotorRotationCount(OUT_B);
-    thisPosition.heading = SensorHTCompass(S3);
-
-    // Log entry for all readings this iteration to disk
-    result = writeEntry(handle, thisPosition);
 
     // calculate conditional variables
     counter = tick % 1000;
@@ -162,6 +122,11 @@ task main() {
     TextOut(0, LCD_LINE5, rightRotationMsg);
     TextOut(0, LCD_LINE6, leftRotationMsg);
     TextOut(0, LCD_LINE7, timeSinceLastTurnMsg);
+    
+    // Log entry for all readings this iteration to disk
+    msg = tickStr + "," + compassStr + "," + leftRotationStr + "," + rightRotationStr;
+    result = WriteLnString(handle, msg, actuallyWritten);
+
     ///////////////////////////////////////////////////////////////////////////
 
 
