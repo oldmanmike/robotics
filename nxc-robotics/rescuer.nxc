@@ -286,10 +286,12 @@ task main() {
       //estimatedDistance = ((rightRotation + leftRotation) / 4000);
        
       if (isUltraObjectFound(i,forwardHistory,20)) {
+        PlaySound(SOUND_DOWN);
         turnLeftWithCompass(IN_4, (-50));
       }
-      /* 
-      if (!(isUltraObjectFound(i,frontHistory,30))) {
+      
+      if (!(isUltraObjectFound(i,frontHistory,50))) {
+        PlaySound(SOUND_UP);
         OnFwdSync(OUT_AB, 50, (-1));
         Wait(2000);
         Off(OUT_AB);
@@ -298,7 +300,7 @@ task main() {
         Wait(2500);
         Off(OUT_AB);
       }
-      */ 
+
       if (abs(frontUltraReading - backUltraReading) > 1) {
         if (frontUltraReading < backUltraReading) {
           OnFwd(OUT_A, 50);
@@ -310,13 +312,13 @@ task main() {
           Off(OUT_B);
         }
       } else {
-        if ((frontUltraReading < 20) && (backUltraReading < 20)) {
+        if ((frontUltraReading < 25) && (backUltraReading < 25)) {
           OnFwdSync(OUT_AB, 50, (-5));
-          Wait(1000);
+          Wait(500);
           Off(OUT_AB);
         } else {
           OnFwdSync(OUT_AB, 50, (-1));
-          Wait(1000);
+          Wait(500);
           Off(OUT_AB);
         }
       }
